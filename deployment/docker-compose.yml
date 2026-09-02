@@ -1,0 +1,29 @@
+services:
+  streambox:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    container_name: streambox
+    restart: unless-stopped
+    env_file:
+      - ../config/.env
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      SD_BASE: /media
+      HERO_BANNER_BASE: /media/hero banner
+      LOG_DIR: /app/logs
+      ENABLE_CSP: "1"
+    ports:
+      - "5000:5000"
+    volumes:
+      - ../data:/app/data
+      - ../logs:/app/logs
+      - ../backups:/app/backups
+      - ../media:/media
+    healthcheck:
+      test: ["CMD", "node", "scripts/health-check.js", "http://127.0.0.1:5000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

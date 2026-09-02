@@ -1,0 +1,161 @@
+/* Netflix 2024 Design System - StreamBox Upgrade */
+:root {
+  /* Netflix Primary */
+  --netflix-red: #E50914;
+  --netflix-black: #141414;
+  
+  /* Typography Scale */
+  --font-display: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading:  clamp(2.5rem, 5vw, 4rem);
+  --font-title: clamp(1.5rem, 3.5vw, 2.5rem);
+  --font-body: clamp(0.95rem, 2vw, 1.1rem);
+  
+  /* Spacing Scale */
+  --space-xs: 0.5rem; --space-sm: 1rem; --space-md: 1.5rem; --space-lg: 2.5rem;
+  --space-xl: 4rem; --space-2xl: 6rem;
+  
+  /* Glassmorphism */
+  --glass-bg: rgba(20,20,20,0.85);
+  --glass-blur: blur(25px);
+  --glass-border: 1px solid rgba(255,255,255,0.1);
+  
+  /* Shadows */
+  --shadow-glow: 0 8px 32px rgba(229,9,20,0.25);
+  --shadow-card: 0 20px 60px rgba(0,0,0,0.4);
+  --motion-premium: cubic-bezier(.16,1,.3,1);
+}
+
+/* Typography */
+* { 
+  font-family: var(--font-display);
+  font-feature-settings: 'calt' 1, 'liga' 1, 'kern' 1;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,h2,h3 { 
+  font-weight: 800; 
+  letter-spacing: 0; 
+  line-height: 1.1;
+}
+
+/* Global Reset + Modern Base */
+body {
+  background: radial-gradient(circle at 20% 80%, #1a1a2e 0%, #16213e 50%, #0f1419 100%);
+  line-height: 1.55;
+  scroll-behavior: smooth;
+}
+
+/* Navbar - Netflix 2024 */
+.navbar {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: var(--glass-border);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.logo {
+  font-size: var(--font-title);
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--netflix-red), #ff3942);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Cards - Enhanced Glass */
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: 1.25rem;
+  transition: transform 0.4s var(--motion-premium), box-shadow 0.4s var(--motion-premium), border-color 0.3s var(--motion-premium), background 0.3s var(--motion-premium);
+  position: relative;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.6s;
+  z-index: 1;
+}
+
+.card:hover::before { left: 100%; }
+
+.card:hover {
+  transform: translateY(-12px) rotateX(5deg) rotateY(5deg);
+  box-shadow: var(--shadow-glow), var(--shadow-card);
+}
+
+/* Hero Section */
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top, transparent 0%, rgba(0,0,0,0.75) 70%);
+}
+
+/* Buttons - Micro Animations */
+.btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn:hover::before { left: 100%; }
+
+@keyframes shimmer {
+  0% { background-position: -500px 0; }
+  100% { background-position: 500px 0; }
+}
+
+.card {
+  background: linear-gradient(90deg, var(--glass-bg) 0%, 
+    var(--glass-bg) 50%, var(--glass-bg) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
+
+@keyframes staggerFade {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.row > .card:nth-child(odd) { animation-delay: 0.1s; }
+.row > .card:nth-child(even) { animation-delay: 0.2s; }
+.row > .card { animation: staggerFade 0.6s ease forwards; }
+
+/* Forms - Modern Input */
+.form-input, .form-textarea {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  transition: border-color 0.3s var(--motion-premium), box-shadow 0.3s var(--motion-premium), background 0.3s var(--motion-premium), transform 0.3s var(--motion-premium);
+}
+
+.form-input:focus {
+  border-color: var(--netflix-red);
+  box-shadow: 0 0 0 3px rgba(229,9,20,0.15);
+  transform: translateY(-1px);
+}
+
+/* Responsive Typography */
+@media (max-width: 768px) {
+  :root {
+    --font-heading: clamp(1.8rem, 6vw, 2.8rem);
+  }
+}

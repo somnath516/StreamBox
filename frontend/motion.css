@@ -1,0 +1,1031 @@
+/* =====================================================
+   STREAMBOX PREMIUM MOTION SYSTEM
+   Shared, GPU-friendly motion primitives for the public UI.
+   ===================================================== */
+
+:root {
+  --sb-motion-tap: 150ms;
+  --sb-motion-fast: 210ms;
+  --sb-motion-med: 380ms;
+  --sb-motion-slow: 680ms;
+  --sb-motion-cinema: 920ms;
+  --sb-ease-standard: cubic-bezier(.2, .78, .24, 1);
+  --sb-ease-cinema: cubic-bezier(.16, 1, .3, 1);
+  --sb-ease-hover: cubic-bezier(.18, .82, .22, 1);
+  --sb-ease-press: cubic-bezier(.28, 1.36, .42, 1);
+  --sb-red: #e50914;
+  --sb-panel: rgba(18, 18, 18, .82);
+  --sb-border: rgba(255, 255, 255, .11);
+  --sb-glow: rgba(229, 9, 20, .34);
+  --sb-focus: 0 0 0 3px rgba(255, 255, 255, .92), 0 0 0 7px rgba(229, 9, 20, .28), 0 20px 55px rgba(0, 0, 0, .45);
+  --sb-card-scale: 1.035;
+  --sb-card-tv-scale: 1.052;
+  --sb-card-rise: -8px;
+  --sb-card-tv-rise: -12px;
+  --sb-stagger-card: 34ms;
+  --sb-stagger-section: 58ms;
+}
+
+html.motion-js {
+  scroll-behavior: smooth;
+}
+
+body.motion-enhanced {
+  animation: sbPageEnter var(--sb-motion-cinema) var(--sb-ease-cinema) both;
+}
+
+body.motion-exiting {
+  pointer-events: none;
+}
+
+#motionPageOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(1.012);
+  background:
+    radial-gradient(980px 560px at 18% 18%, rgba(229, 9, 20, .14), transparent 64%),
+    radial-gradient(760px 420px at 82% 24%, rgba(255, 255, 255, .045), transparent 62%),
+    rgba(0, 0, 0, .86);
+  transition:
+    opacity 420ms var(--sb-ease-cinema),
+    transform 420ms var(--sb-ease-cinema);
+  will-change: opacity, transform;
+}
+
+/* Never block the player viewport when streaming video */
+body.player-page #motionPageOverlay,
+body.player-view #motionPageOverlay {
+  display: none !important;
+}
+
+body.motion-exiting #motionPageOverlay {
+
+  opacity: 1;
+  transform: scale(1);
+}
+
+
+@keyframes sbPageEnter {
+  from {
+    opacity: 0;
+    transform: scale(.992);
+    filter: saturate(.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: saturate(1);
+  }
+}
+
+/* Reveal primitives */
+.motion-reveal {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0) scale(.992);
+  transition:
+    opacity 760ms var(--sb-ease-cinema),
+    transform 760ms var(--sb-ease-cinema);
+  transition-delay: min(calc(var(--motion-index, 0) * var(--sb-stagger-section)), 260ms);
+  will-change: opacity, transform;
+}
+
+.motion-reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.motion-card-in {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0) scale(.982);
+  animation: sbCardIn 660ms var(--sb-ease-cinema) both;
+  animation-delay: min(calc(var(--motion-index, 0) * var(--sb-stagger-card)), 260ms);
+}
+
+@keyframes sbCardIn {
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Navbar and drawer motion */
+.navbar {
+  transition:
+    transform 460ms var(--sb-ease-cinema),
+    background 420ms var(--sb-ease-cinema),
+    backdrop-filter 420ms var(--sb-ease-cinema),
+    box-shadow 420ms var(--sb-ease-cinema) !important;
+}
+
+.navbar.is-scrolled {
+  background: rgba(8, 8, 8, .74) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .34);
+  backdrop-filter: blur(20px) saturate(1.08);
+}
+
+.navbar.is-hidden {
+  transform: translate3d(0, -110%, 0);
+}
+
+body.nav-open .navbar,
+body.search-open .navbar {
+  transform: translate3d(0, 0, 0);
+}
+
+.nav-links span,
+.nav-link {
+  position: relative;
+}
+
+.nav-links span::after,
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 5px;
+  height: 2px;
+  border-radius: 999px;
+  opacity: 0;
+  transform: scaleX(.32);
+  background: linear-gradient(90deg, rgba(255, 255, 255, .2), var(--sb-red), rgba(255, 255, 255, .2));
+  transform-origin: center;
+  transition:
+    opacity var(--sb-motion-fast) var(--sb-ease-standard),
+    transform var(--sb-motion-med) var(--sb-ease-cinema);
+}
+
+.nav-links span:hover::after,
+.nav-links span.is-active::after,
+.nav-link:hover::after,
+.nav-link.active::after,
+.nav-link[aria-current="page"]::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+body.nav-open .nav-links span,
+.sidebar.open .nav-link {
+  animation: sbNavItemIn 440ms var(--sb-ease-cinema) both;
+  animation-delay: min(calc(var(--motion-index, 0) * 52ms), 300ms);
+}
+
+@keyframes sbNavItemIn {
+  from {
+    opacity: 0;
+    transform: translate3d(-14px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Hero */
+.hero {
+  isolation: isolate;
+  --hero-drift-x: 0px;
+  --hero-drift-y: 0px;
+}
+
+body.motion-enhanced .hero::before {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: .28;
+  background:
+    radial-gradient(720px 320px at 20% 52%, rgba(229, 9, 20, .13), transparent 72%),
+    radial-gradient(640px 420px at 78% 18%, rgba(255, 255, 255, .045), transparent 68%),
+    linear-gradient(108deg, transparent 20%, rgba(255, 255, 255, .07) 45%, transparent 66%);
+  mix-blend-mode: screen;
+  transform: translate3d(-30%, 0, 0) rotate(3deg);
+  animation: sbHeroSweep 13s var(--sb-ease-cinema) infinite;
+  will-change: transform, opacity;
+}
+
+body.motion-enhanced .hero-background {
+  transform:
+    translate3d(
+      var(--hero-drift-x, 0px),
+      calc(var(--hero-parallax, 0px) + var(--hero-drift-y, 0px)),
+      0
+    )
+    scale(var(--hero-scale, 1));
+  transition: transform 120ms linear;
+  will-change: transform;
+}
+
+body.motion-enhanced .hero-background::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: .42;
+  background:
+    radial-gradient(700px 420px at 18% 58%, rgba(0, 0, 0, .08), transparent 70%),
+    linear-gradient(90deg, rgba(0, 0, 0, .2), transparent 42%, rgba(0, 0, 0, .12));
+  animation: sbAmbientDrift 18s var(--sb-ease-cinema) infinite alternate;
+}
+
+body.motion-enhanced .hero-content {
+  top: 52%;
+  opacity: 1;
+  transform: translate3d(0, -50%, 0) !important;
+  animation: none !important;
+}
+
+body.motion-enhanced .hero-content > * {
+  animation: sbFadeUp 820ms var(--sb-ease-cinema) both;
+}
+
+body.motion-enhanced .hero-title { animation-delay: 130ms; }
+body.motion-enhanced .hero-desc { animation-delay: 250ms; }
+body.motion-enhanced .hero-buttons { animation-delay: 370ms; }
+
+@keyframes sbHeroSweep {
+  0%, 42% {
+    transform: translate3d(-44%, 0, 0) rotate(3deg);
+    opacity: .09;
+  }
+  62% {
+    transform: translate3d(28%, 0, 0) rotate(3deg);
+    opacity: .24;
+  }
+  100% {
+    transform: translate3d(48%, 0, 0) rotate(3deg);
+    opacity: 0;
+  }
+}
+
+@keyframes sbAmbientDrift {
+  from {
+    opacity: .32;
+    transform: translate3d(-1.2%, 0, 0) scale(1.01);
+  }
+  to {
+    opacity: .48;
+    transform: translate3d(1.2%, -1%, 0) scale(1.025);
+  }
+}
+
+@keyframes sbFadeUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Cards */
+.card {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --glow-x: 50%;
+  --glow-y: 50%;
+  --card-pan-x: 0px;
+  --card-pan-y: 0px;
+  --card-light-x: -42%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  contain: layout paint;
+}
+
+body.motion-enhanced .card {
+  isolation: isolate;
+  transition:
+    transform 540ms var(--sb-ease-hover),
+    box-shadow 540ms var(--sb-ease-cinema),
+    border-color 360ms var(--sb-ease-standard),
+    filter 360ms var(--sb-ease-standard) !important;
+}
+
+body.motion-enhanced .card.is-hovering,
+body.motion-enhanced .card.focused,
+body.motion-enhanced .card:focus-visible {
+  will-change: transform;
+}
+
+body.motion-enhanced .card.is-hovering {
+  transition:
+    transform 80ms linear,
+    box-shadow 300ms var(--sb-ease-cinema),
+    border-color 240ms var(--sb-ease-standard),
+    filter 240ms var(--sb-ease-standard) !important;
+}
+
+body.motion-enhanced .card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(to top, rgba(0, 0, 0, .72), rgba(0, 0, 0, .2) 38%, transparent 70%),
+    radial-gradient(260px 180px at 50% 100%, rgba(229, 9, 20, .18), transparent 72%);
+  transform: translate3d(0, 8px, 0);
+  transition:
+    opacity 420ms var(--sb-ease-cinema),
+    transform 520ms var(--sb-ease-cinema);
+}
+
+body.motion-enhanced .card::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(260px 190px at var(--glow-x) var(--glow-y), rgba(255, 255, 255, .18), transparent 66%),
+    linear-gradient(112deg, transparent 18%, rgba(255, 255, 255, .20) 44%, transparent 64%),
+    linear-gradient(135deg, rgba(229, 9, 20, .20), transparent 46%, rgba(255, 255, 255, .07));
+
+  background-position:
+    center,
+    var(--card-light-x) 0,
+    center;
+  background-size:
+    auto,
+    220% 100%,
+    auto;
+
+  transition:
+    opacity 420ms var(--sb-ease-cinema),
+    background-position 980ms var(--sb-ease-cinema),
+    filter 520ms var(--sb-ease-standard);
+  z-index: 2;
+}
+
+body.motion-enhanced .card:hover,
+body.motion-enhanced .card.focused,
+body.motion-enhanced .card:focus-visible {
+  transform:
+    perspective(980px)
+    translate3d(0, var(--sb-card-rise), 0)
+    rotateX(calc(var(--tilt-x) * .78))
+    rotateY(calc(var(--tilt-y) * .78))
+    scale(var(--sb-card-scale)) !important;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, .48),
+    0 0 0 1px rgba(255, 255, 255, .12),
+    0 0 38px rgba(229, 9, 20, .16) !important;
+}
+
+body.motion-enhanced .card:hover::before,
+body.motion-enhanced .card.focused::before,
+body.motion-enhanced .card:focus-visible::before {
+  opacity: .86;
+  transform: translate3d(0, 0, 0);
+}
+
+body.motion-enhanced .card:hover::after,
+body.motion-enhanced .card.focused::after,
+body.motion-enhanced .card:focus-visible::after {
+  opacity: 1;
+  background-position:
+    center,
+    140% 0,
+    center;
+}
+
+body.motion-enhanced .card img,
+body.motion-enhanced .card .card-info,
+body.motion-enhanced .card p {
+  position: relative;
+  z-index: 3;
+}
+
+body.motion-enhanced .card img {
+  transition:
+    transform 740ms var(--sb-ease-cinema),
+    filter 520ms var(--sb-ease-standard),
+    box-shadow 520ms var(--sb-ease-cinema),
+    opacity 420ms var(--sb-ease-cinema) !important;
+}
+
+body.motion-enhanced .card:hover img,
+body.motion-enhanced .card.focused img,
+body.motion-enhanced .card:focus-visible img {
+  transform: translate3d(var(--card-pan-x), var(--card-pan-y), 0) scale(1.035) !important;
+  filter: brightness(1.1) contrast(1.045) saturate(1.04) !important;
+}
+
+body.motion-enhanced .card p,
+body.motion-enhanced .card .card-info {
+  opacity: .78;
+  transform: translate3d(0, 4px, 0);
+  transition:
+    opacity 360ms var(--sb-ease-standard) 40ms,
+    transform 440ms var(--sb-ease-cinema) 40ms,
+    color 300ms var(--sb-ease-standard);
+}
+
+body.motion-enhanced .card:hover p,
+body.motion-enhanced .card.focused p,
+body.motion-enhanced .card:focus-visible p,
+body.motion-enhanced .card:hover .card-info,
+body.motion-enhanced .card.focused .card-info,
+body.motion-enhanced .card:focus-visible .card-info {
+  opacity: 1;
+  transform: translate3d(0, 0, 18px);
+}
+
+body.motion-enhanced .card img.motion-img,
+.hero-img.motion-img,
+#previewImg.motion-img,
+#previewThumbnail.motion-img,
+#previewHeroBanner.motion-img {
+  opacity: 0;
+  filter: blur(10px) saturate(.9);
+  transform: scale(1.015);
+  transition:
+    opacity var(--sb-motion-med) var(--sb-ease-cinema),
+    filter var(--sb-motion-med) var(--sb-ease-cinema),
+    transform var(--sb-motion-slow) var(--sb-ease-cinema);
+}
+
+body.motion-enhanced .card img.motion-img.is-loaded,
+.hero-img.motion-img.is-loaded,
+#previewImg.motion-img.is-loaded,
+#previewThumbnail.motion-img.is-loaded,
+#previewHeroBanner.motion-img.is-loaded {
+  opacity: 1;
+  filter: none;
+  transform: scale(1);
+}
+
+.row {
+  scroll-padding-inline: clamp(14px, 3vw, 48px);
+  position: relative;
+  --row-spot-x: 50%;
+  --row-spot-y: 50%;
+  transition: filter 260ms var(--sb-ease-standard);
+}
+
+.row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(420px 210px at var(--row-spot-x) var(--row-spot-y), rgba(255, 255, 255, .075), transparent 70%),
+    linear-gradient(90deg, rgba(229, 9, 20, .035), transparent 22%, transparent 78%, rgba(229, 9, 20, .035));
+  transform: translate3d(0, 0, 0);
+  transition: opacity 320ms var(--sb-ease-standard);
+}
+
+.row.row-hot::before,
+.row.is-kinetic::before {
+  opacity: 1;
+}
+
+.row.is-kinetic {
+  filter: saturate(1.04) contrast(1.02);
+}
+
+.row > .card {
+  z-index: 1;
+}
+
+/* Buttons and ripple */
+button,
+.btn,
+.icon-btn,
+.upload-btn,
+.refresh-btn,
+.action-icon,
+.file-btn,
+.nav-link,
+.controlButton,
+.skipBtn {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn,
+.icon-btn,
+.upload-btn,
+.refresh-btn,
+.action-icon,
+.file-btn,
+.nav-link,
+.controlButton,
+.skipBtn,
+.remote button {
+  position: relative;
+  overflow: hidden;
+}
+
+body.motion-enhanced :is(.btn, .icon-btn, .upload-btn, .refresh-btn, .action-icon, .file-btn, .controlButton, .skipBtn, .remote button) {
+  transition:
+    transform var(--sb-motion-fast) var(--sb-ease-hover),
+    background var(--sb-motion-med) var(--sb-ease-standard),
+    border-color var(--sb-motion-med) var(--sb-ease-standard),
+    box-shadow var(--sb-motion-med) var(--sb-ease-cinema),
+    color var(--sb-motion-fast) var(--sb-ease-standard),
+    opacity var(--sb-motion-fast) var(--sb-ease-standard) !important;
+}
+
+body.motion-enhanced :is(.btn, .upload-btn, .refresh-btn):hover {
+  transform: translate3d(0, -2px, 0) scale(1.018) !important;
+}
+
+body.motion-enhanced :is(.icon-btn, .action-icon, .controlButton, .skipBtn, .remote button):hover {
+  transform: translate3d(0, -1px, 0) scale(1.026) !important;
+}
+
+.btn::after,
+.upload-btn::after,
+.refresh-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(110deg, transparent 18%, rgba(255, 255, 255, .22) 45%, transparent 70%);
+  transform: translate3d(-120%, 0, 0);
+  transition:
+    opacity var(--sb-motion-fast) var(--sb-ease-standard),
+    transform var(--sb-motion-slow) var(--sb-ease-cinema);
+}
+
+.btn:hover::after,
+.upload-btn:hover::after,
+.refresh-btn:hover::after {
+  opacity: 1;
+  transform: translate3d(120%, 0, 0);
+}
+
+.motion-ripple {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, .38), rgba(255, 255, 255, .12) 52%, transparent 70%);
+  transform: translate3d(-50%, -50%, 0) scale(0);
+  animation: sbRipple 720ms var(--sb-ease-cinema) forwards;
+  z-index: 5;
+}
+
+@keyframes sbRipple {
+  to {
+    opacity: 0;
+    transform: translate3d(-50%, -50%, 0) scale(18);
+  }
+}
+
+.upload-btn.is-loading,
+.btn.is-loading {
+  cursor: progress;
+}
+
+.upload-btn.is-loading::before,
+.btn.is-loading::before {
+  content: "";
+  width: 1em;
+  height: 1em;
+  margin-right: .55em;
+  display: inline-block;
+  vertical-align: -2px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  animation: sbSpin 820ms linear infinite;
+}
+
+@keyframes sbSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Search */
+#searchOverlay {
+  backdrop-filter: blur(0);
+  transition:
+    opacity 420ms var(--sb-ease-cinema) !important,
+    transform 420ms var(--sb-ease-cinema) !important,
+    backdrop-filter 420ms var(--sb-ease-cinema);
+}
+
+#searchOverlay.show {
+  backdrop-filter: blur(18px) saturate(1.05);
+}
+
+#searchBox,
+.search-input,
+.form-input,
+.form-textarea {
+  transform-origin: center;
+}
+
+#searchBox:focus,
+.search-input:focus,
+.form-input:focus,
+.form-textarea:focus {
+  transform: translate3d(0, -1px, 0) scale(1.004);
+}
+
+#searchResults .card {
+  animation-duration: 560ms;
+}
+
+/* Skeletons and loading states */
+.motion-skeleton-card {
+  min-width: clamp(130px, 25vw, 180px);
+  max-width: 240px;
+  cursor: default;
+  pointer-events: none;
+}
+
+.motion-skeleton-poster,
+.motion-skeleton-line {
+  border-radius: 6px;
+  background:
+    linear-gradient(100deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .13), rgba(255, 255, 255, .05));
+  background-size: 220% 100%;
+  animation: sbSkeleton 1.65s ease-in-out infinite;
+}
+
+.motion-skeleton-poster {
+  width: 100%;
+  height: clamp(180px, 35vw, 260px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .24);
+}
+
+.motion-skeleton-line {
+  width: 74%;
+  height: 11px;
+  margin-top: 10px;
+}
+
+@keyframes sbSkeleton {
+  from { background-position: 180% 0; }
+  to { background-position: -180% 0; }
+}
+
+#loading {
+  letter-spacing: .02em;
+}
+
+#loading::after {
+  content: "";
+  width: 26px;
+  height: 2px;
+  margin-left: 10px;
+  display: inline-block;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .8);
+  animation: sbLoaderBar 900ms var(--sb-ease-cinema) infinite;
+}
+
+@keyframes sbLoaderBar {
+  0%, 100% { transform: scaleX(.28); opacity: .48; }
+  50% { transform: scaleX(1); opacity: 1; }
+}
+
+#etaPanel,
+#uploadLoading {
+  transform-origin: top center;
+}
+
+#etaPanel.is-visible,
+#uploadLoading {
+  animation: sbPanelDrop var(--sb-motion-med) var(--sb-ease-cinema) both;
+}
+
+@keyframes sbPanelDrop {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0) scale(.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+/* Modal */
+.motion-modal {
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 420ms var(--sb-ease-cinema),
+    backdrop-filter 420ms var(--sb-ease-cinema);
+}
+
+.motion-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.motion-modal > * {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0) scale(.972);
+  transition:
+    opacity 440ms var(--sb-ease-cinema),
+    transform 520ms var(--sb-ease-cinema);
+  will-change: opacity, transform;
+}
+
+.motion-modal.is-open > * {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+/* Admin and table polish */
+.stat-card,
+.upload-card,
+.table-container {
+  transform-style: preserve-3d;
+}
+
+.table tbody tr {
+  animation: sbRowIn 360ms var(--sb-ease-cinema) both;
+  animation-delay: min(calc(var(--motion-index, 0) * 28ms), 220ms);
+}
+
+@keyframes sbRowIn {
+  from {
+    opacity: 0;
+    transform: translate3d(10px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.stat-number.is-counting {
+  text-shadow: 0 0 18px rgba(229, 9, 20, .36);
+}
+
+/* Player */
+body.motion-enhanced #overlay {
+  transition:
+    opacity 520ms var(--sb-ease-cinema),
+    background 520ms var(--sb-ease-cinema) !important;
+}
+
+body.motion-enhanced #controls,
+body.motion-enhanced #topBar {
+  transition:
+    opacity 460ms var(--sb-ease-cinema),
+    transform 520ms var(--sb-ease-cinema) !important;
+}
+
+body.motion-enhanced #controls {
+  transform: translate3d(0, 22px, 0);
+}
+
+body.motion-enhanced.show #controls,
+body.motion-enhanced.show #topBar {
+  transform: translate3d(0, 0, 0);
+}
+
+body.video-buffering #overlay {
+  opacity: 1;
+}
+
+.player-spinner {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 10;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(.9);
+  transition:
+    opacity 260ms var(--sb-ease-standard),
+    transform 320ms var(--sb-ease-cinema);
+}
+
+.player-spinner::before,
+.player-spinner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 3px solid rgba(255, 255, 255, .18);
+  border-top-color: var(--sb-red);
+}
+
+.player-spinner::before {
+  animation: sbSpin 900ms linear infinite;
+}
+
+.player-spinner::after {
+  inset: 9px;
+  border-width: 2px;
+  border-top-color: rgba(255, 255, 255, .85);
+  animation: sbSpin 620ms linear infinite reverse;
+}
+
+body.video-buffering .player-spinner {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.progress:hover #fill,
+.progress.is-scrubbing #fill {
+  filter: drop-shadow(0 0 10px rgba(229, 9, 20, .48));
+}
+
+body.motion-enhanced .progress {
+  transition:
+    height 180ms var(--sb-ease-standard),
+    background 220ms var(--sb-ease-standard),
+    transform 220ms var(--sb-ease-standard);
+}
+
+body.motion-enhanced .progress:hover,
+body.motion-enhanced .progress.is-scrubbing {
+  transform: translate3d(0, -1px, 0);
+}
+
+body.motion-enhanced #dot {
+  transition:
+    left 180ms linear,
+    transform 220ms var(--sb-ease-press),
+    box-shadow 220ms var(--sb-ease-standard) !important;
+}
+
+#centerBtn.visible {
+  animation: sbCenterPop 320ms var(--sb-ease-press) both;
+}
+
+@keyframes sbCenterPop {
+  from { transform: scale(.88); }
+  to { transform: scale(1); }
+}
+
+.player-seek-hint {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 11;
+  min-width: 74px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: .01em;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-50%, -50%, 0) scale(.94);
+  background: rgba(0, 0, 0, .56);
+  border: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .34), 0 0 28px rgba(229, 9, 20, .16);
+  backdrop-filter: blur(14px);
+  transition:
+    opacity 220ms var(--sb-ease-standard),
+    transform 300ms var(--sb-ease-cinema);
+}
+
+body.seek-feedback .player-seek-hint {
+  opacity: 1;
+  transform: translate3d(-50%, -50%, 0) scale(1);
+}
+
+/* Remote */
+.remote button:active,
+.btn:active,
+.icon-btn:active,
+.action-icon:active,
+.refresh-btn:active,
+.file-btn:active,
+.controlButton:active,
+.skipBtn:active {
+  transform: scale(.96);
+}
+
+/* TV and remote focus */
+.motion-tv .card:focus-visible,
+.motion-tv .card.focused,
+.motion-tv button:focus-visible,
+.motion-tv [role="button"]:focus-visible,
+.motion-tv .nav-link:focus-visible {
+  outline: none;
+  box-shadow: var(--sb-focus) !important;
+}
+
+.motion-tv .card:focus-visible,
+.motion-tv .card.focused {
+  animation: sbTvFocusGlow 2.8s ease-in-out infinite;
+  transform:
+    perspective(1000px)
+    translate3d(0, var(--sb-card-tv-rise), 0)
+    scale(var(--sb-card-tv-scale)) !important;
+}
+
+.motion-tv .row:focus-within {
+  scroll-snap-type: x proximity;
+}
+
+@keyframes sbTvFocusGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, .9),
+      0 0 0 7px rgba(229, 9, 20, .26),
+      0 24px 62px rgba(0, 0, 0, .5) !important;
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, .96),
+      0 0 0 9px rgba(229, 9, 20, .34),
+      0 28px 70px rgba(0, 0, 0, .54) !important;
+  }
+}
+
+/* Low power and reduced motion */
+.motion-low .hero::before,
+.motion-low .hero-img.active,
+.motion-low .hero-background::after,
+.motion-low .motion-skeleton-poster,
+.motion-low .motion-skeleton-line {
+  animation: none !important;
+}
+
+.motion-low .card:hover,
+.motion-low .card.focused,
+.motion-low .card:focus-visible {
+  transform: translate3d(0, -5px, 0) scale(1.02) !important;
+}
+
+@media (hover: none), (pointer: coarse) {
+  :root {
+    --sb-card-scale: 1.018;
+    --sb-card-rise: -4px;
+  }
+
+  body.motion-enhanced .hero::before,
+  body.motion-enhanced .hero-background::after {
+    animation-duration: 22s;
+    opacity: .18;
+  }
+
+  body.motion-enhanced .hero-content {
+    top: 58%;
+    transform: translate3d(0, -50%, 0) !important;
+  }
+
+  .card:hover {
+    transform: translate3d(0, 0, 0) scale(1) !important;
+  }
+
+  .card:active,
+  .card.focused,
+  .card:focus-visible {
+    transform: translate3d(0, -4px, 0) scale(1.025) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.motion-js {
+    scroll-behavior: auto;
+  }
+
+  body.motion-enhanced,
+  .motion-reveal,
+  .motion-card-in,
+  .sidebar.open .nav-link,
+  body.nav-open .nav-links span,
+  .table tbody tr {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  #motionPageOverlay,
+  .hero::before,
+  .hero-background::after,
+  .motion-ripple,
+  .player-spinner,
+  .player-seek-hint {
+    display: none !important;
+  }
+
+  .card:hover,
+  .card.focused,
+  .card:focus-visible {
+    transform: none !important;
+  }
+}

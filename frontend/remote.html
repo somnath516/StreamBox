@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, minimum-scale=1.0"/>
+<meta name="theme-color" content="#070a0f">
+<title>OTT Remote Control</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="128x128" href="/logos/icon-192.png">
+<link rel="icon" type="image/png" sizes="256x256" href="/logos/icon-512.png">
+<link rel="stylesheet" href="/responsive.css">
+<link rel="stylesheet" href="/motion.css">
+<script src="/motion.js" defer></script>
+
+
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial;
+  background: radial-gradient(circle at top, #0f141c, #070a0f);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+h2 {
+  color: #e50914;
+  margin-bottom: 25px;
+}
+
+.remote {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  width: 280px;
+}
+
+button {
+  padding: 18px;
+  font-size: 16px;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  background: #141b25;
+  color: white;
+  transition: 0.25s;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+}
+
+button:hover {
+  background: #e50914;
+  transform: scale(1.08);
+}
+
+#status {
+  margin-top: 18px;
+  font-size: 14px;
+  opacity: 0.8;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 10px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: red;
+  display: inline-block;
+  margin-right: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🎮 OTT Remote</h2>
+
+<div class="remote">
+  <button onmousedown="hold('back')" onmouseup="stop()">⏪ -10s</button>
+  <button onclick="send('play')">▶ Play</button>
+  <button onclick="send('pause')">⏸ Pause</button>
+  <button onmousedown="hold('forward')" onmouseup="stop()">⏩ +10s</button>
+</div>
+
+<div id="status">
+  <span class="dot" id="dot"></span>
+  Ready
+</div>
+
+<script>
+
+let holdInterval = null;
+
+/* ================= GET CURRENT MOVIE ================= */
+function getMovie() {
+  return localStorage.getItem("currentMovie");
+}
+
+/* ================= FIXED SEND COMMAND ================= */
+function send(action) {
+  // Fixed: Remove movie param - server expects /control/:action only
+  fetch(`/control/${action}`)
+    .then(() => {
+      setStatus("Sent: " + action.toUpperCase(), true);
+    })
+    .catch(() => {
+      setStatus("Connection error", false);
+    });
+}
+
+function getMovie() {
+  return localStorage.getItem("currentMovie");
+}
+
+/* ================= HOLD CONTROL ================= */
+function hold(action) {
+  send(action);
+
+  holdInterval = setInterval(() => {
+    send(action);
+  }, 400);
+}
+
+function stop() {
+  clearInterval(holdInterval);
+}
+
+/* ================= STATUS ================= */
+function setStatus(text, ok) {
+  document.getElementById("status").innerText = text;
+
+  const dot = document.getElementById("dot");
+  dot.style.background = ok ? "limegreen" : "red";
+
+  setTimeout(() => {
+    document.getElementById("status").innerText = "Ready";
+    dot.style.background = "red";
+  }, 1200);
+}
+
+// Auto-poll server commands
+setInterval(async () => {
+  try {
+    const res = await fetch('/remote-commands');
+    const cmds = await res.json();
+    if (cmds.length > 0) {
+      cmds.forEach(cmd => {
+        // Execute on player if open, else queue
+        if (typeof window.onRemoteCommand === 'function') window.onRemoteCommand(cmd);
+        setStatus(`Executed: ${cmd.action}`, true);
+      });
+    }
+  } catch {}
+}, 1000);
+
+</script>
+
+</body>
+</html>

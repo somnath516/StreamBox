@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "buildCommand": "npm ci --omit=dev",
+  "installCommand": "npm ci --omit=dev",
+
+
+  "functions": {
+    "api/**/*.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/server/$1" }
+  ]
+}
+
+
