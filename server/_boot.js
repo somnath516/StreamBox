@@ -1,4 +1,4 @@
-const { createApp } = require('../../backend/server');
+const { createApp } = require('../backend/server');
 
 // If running on Vercel, avoid local .env reads.
 // Credentials/env should come from Vercel project settings.
