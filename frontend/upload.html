@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="/motion.css">
 <script src="/favicon.js?v=2" defer></script>
 <script src="/motion.js" defer></script>
+<script src="/admin-auth.js"></script>
 
 
 <style>
@@ -37,7 +38,8 @@ body {
   font-family: "Segoe UI", system-ui;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 
@@ -192,6 +194,17 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 32px;
   align-items: start;
+}
+
+@media (max-width: 820px) {
+  .upload-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .upload-previews {
+    position: static;
+  }
 }
 
 .upload-form {
@@ -719,12 +732,7 @@ const thumbnailPreviewCard = document.getElementById('thumbnailPreviewCard');
 const uploadPreviews = document.querySelector('.upload-previews');
 
 function getAdminToken() {
-  let token = localStorage.getItem('streamboxAdminToken') || '';
-  if (!token) {
-    token = window.prompt('Admin token') || '';
-    if (token) localStorage.setItem('streamboxAdminToken', token);
-  }
-  return token;
+  return window.StreamBoxAuth.getToken();
 }
 
 
@@ -876,10 +884,9 @@ uploadBtn.onclick = async () => {
   xhr.open('POST', '/api/upload');
   const adminToken = getAdminToken();
   if (!adminToken) {
-    status.innerText = 'Admin token required';
-    status.className = 'status error';
     setUploadInFlight(false);
     if (uploadStatusBlock) uploadStatusBlock.classList.remove('visible');
+    window.StreamBoxAuth.redirectToLogin();
     return;
   }
 
@@ -1068,7 +1075,10 @@ function finalize(success, message, extra) {
     if (finished) return;
 
     if (xhr.status < 200 || xhr.status >= 300) {
-      if (xhr.status === 401) localStorage.removeItem('streamboxAdminToken');
+      if (xhr.status === 401) {
+        window.StreamBoxAuth.clear();
+        window.StreamBoxAuth.redirectToLogin();
+      }
       const msg = parsed?.error
         ? `${parsed.error}${parsed.code ? ` (code: ${parsed.code})` : ''}`
         : (xhr.status === 401

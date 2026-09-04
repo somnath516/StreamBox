@@ -516,6 +516,12 @@ input, textarea, select, [contenteditable="true"], p, h1, h2, h3, h4, h5, h6, .c
    ADMIN PAGES - RESPONSIVE
    ===================================================== */
 @media (max-width: 820px) {
+  body:has(.upload-card),
+  body:has(.table-container) {
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
   .sidebar {
     width: min(80vw, 280px);
   }

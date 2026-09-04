@@ -261,6 +261,14 @@ function createCard(m,label=m.title){
   return d;
 }
 
+function markImageUnavailable(img) {
+  if (!img || img.dataset.fallbackApplied) return;
+  img.dataset.fallbackApplied = 'true';
+  img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"%3E%3Crect width="320" height="180" fill="%23202020"/%3E%3Cpath d="M120 115l28-32 22 24 18-18 32 26H120z" fill="%23505050"/%3E%3Ccircle cx="184" cy="72" r="10" fill="%23707070"/%3E%3C/svg%3E';
+  img.alt = 'Thumbnail unavailable';
+  img.classList.add('is-fallback');
+}
+
 
 function render(){
   // Ensure hero starts rotating after movies are available
@@ -276,9 +284,7 @@ function render(){
   const trendingSection = trendingEl.closest('.section');
   const continueSection = continueEl.closest('.section');
 
-  // IMPORTANT: Render the sections even when thumbnails fail.
-  // Previously we hid everything when posters were missing, which produced a visually empty homepage.
-  // We keep the card-level onerror removal, but never hide the whole page pipeline.
+  // Render sections even when an individual thumbnail is unavailable.
   const moviesWithPoster = allMovies.filter(m => !!m.thumbnail);
 
   // Clear containers
@@ -296,8 +302,7 @@ function render(){
       const img = card.querySelector('img');
       if (img) {
         img.onerror = () => {
-          // Remove only the broken card; keep the rest of the UI visible.
-          try { card.remove(); } catch {}
+          markImageUnavailable(img);
         };
         // Force is-loaded if image fails to load
         setTimeout(() => {
@@ -339,7 +344,7 @@ function render(){
     card.style.setProperty('--motion-index', String(idx % 8));
     continueEl.appendChild(card);
     const img = card.querySelector('img');
-    if (img) img.onerror = () => { try { card.remove(); } catch {} };
+    if (img) img.onerror = () => markImageUnavailable(img);
   });
 
   if (continueCount) {
@@ -424,7 +429,7 @@ function liveSearch(val){
     .forEach(m => {
       const card = createCard(m);
       const img = card.querySelector('img');
-      if (img) img.onerror = () => { try { card.remove(); } catch {} };
+      if (img) img.onerror = () => markImageUnavailable(img);
       res.appendChild(card);
     });
 
@@ -501,4 +506,3 @@ function init() {
 
   loadMovies();
 }
-

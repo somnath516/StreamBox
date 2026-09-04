@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="/motion.css?v=2">
 <script src="/favicon.js?v=2" defer></script>
 <script src="/motion.js?v=3" defer></script>
+<script src="/admin-auth.js"></script>
 
 
 <style>
@@ -38,7 +39,8 @@ body {
   font-family: "Segoe UI", system-ui;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 
@@ -483,6 +485,10 @@ body {
 </div>
 
 <script>
+if (!window.StreamBoxAuth.require()) {
+  throw new Error('Admin authentication required');
+}
+
 // DOM element references
 const totalMoviesEl = document.getElementById('totalMovies');
 const completeMoviesEl = document.getElementById('completeMovies');
@@ -493,17 +499,14 @@ let filteredMovies = [];
 const transparentPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
 
 function getAdminToken() {
-  let token = localStorage.getItem('streamboxAdminToken') || '';
-  if (!token) {
-    token = window.prompt('Admin token') || '';
-    if (token) localStorage.setItem('streamboxAdminToken', token);
-  }
-  return token;
+  return window.StreamBoxAuth.getToken();
 }
 
 function authHeaders() {
-  const token = getAdminToken();
+  return window.StreamBoxAuth.headers();
+/*
   return token ? { Authorization: `Bearer ${token}` } : {};
+*/
 }
 
 function escapeHtml(value) {
@@ -685,7 +688,11 @@ searchInput.oninput = e => {
 async function deleteMovie(id) {
   if (!confirm("Delete?")) return;
   const res = await fetch(`/movies/${id}`, { method: "DELETE", headers: authHeaders() });
-  if (res.status === 401) localStorage.removeItem('streamboxAdminToken');
+  if (res.status === 401) {
+    window.StreamBoxAuth.clear();
+    window.StreamBoxAuth.redirectToLogin();
+    return;
+  }
   if (!res.ok) {
     const payload = await res.json().catch(() => null);
     alert(payload?.error || 'Delete failed');
@@ -809,7 +816,11 @@ async function saveEditor() {
     const text = await res.text().catch(() => '');
 
     if (!res.ok) {
-      if (res.status === 401) localStorage.removeItem('streamboxAdminToken');
+      if (res.status === 401) {
+        window.StreamBoxAuth.clear();
+        window.StreamBoxAuth.redirectToLogin();
+        return;
+      }
       alert('Save failed' + (text ? `: ${text}` : ''));
       return;
     }

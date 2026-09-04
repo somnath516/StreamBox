@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/motion.css">
 <script src="/favicon.js?v=2" defer></script>
 <script src="/motion.js" defer></script>
+<script src="/admin-auth.js"></script>
 
 <style>
 :root {
@@ -259,8 +260,8 @@ input::placeholder {
   const submitBtn = document.getElementById('submitBtn');
   const errorMsg = document.getElementById('errorMsg');
 
-  // Load saved token if exists
-  const savedToken = localStorage.getItem('streambox_admin_token');
+  // Keep one canonical key, while migrating tokens saved by older admin pages.
+  const savedToken = window.StreamBoxAuth.getToken();
   if (savedToken) {
     tokenInput.value = savedToken;
   }
@@ -288,7 +289,8 @@ input::placeholder {
 
       if (res.ok) {
         localStorage.setItem('streambox_admin_token', token);
-        window.location.href = '/upload.html';
+        const returnTo = new URLSearchParams(window.location.search).get('returnTo');
+        window.location.href = returnTo && returnTo.startsWith('/') ? returnTo : '/upload.html';
       } else if (res.status === 401) {
         showError('Invalid admin token');
       } else {

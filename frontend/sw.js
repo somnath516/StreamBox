@@ -14,7 +14,6 @@ const STATIC_ASSETS = [
   '/player.html',
   '/upload.html',
   '/database.html',
-  '/remote.html',
   '/responsive.css',
   '/motion.css',
   '/motion.js',
@@ -26,8 +25,7 @@ const STATIC_ASSETS = [
 // Dynamic pages that should always be fresh
 const DYNAMIC_PAGES = [
   'upload.html',
-  'database.html',
-  'remote.html'
+  'database.html'
 ];
 
 // Install event - precache static assets

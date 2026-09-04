@@ -468,6 +468,12 @@ body.motion-enhanced #video {
   opacity:0;
 }
 
+/* The pointer follows the same idle lifecycle as the player chrome. */
+body:not(.show),
+body:not(.show) *{
+  cursor:none !important;
+}
+
 /* show state */
 .show #overlay,
 .show #controls,
