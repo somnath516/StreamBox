@@ -65,8 +65,11 @@ function loadMovies(){
     })
     .catch((e) => {
       console.error('movies_fetch_failed', e);
-      // Keep page usable
-      updateHero('Load Error', "Check console - try refresh");
+      updateHeroHeroContent(null);
+      const heroTitle = document.getElementById("heroTitle");
+      const heroDesc = document.getElementById("heroDesc");
+      if (heroTitle) heroTitle.textContent = 'Unable to load your library';
+      if (heroDesc) heroDesc.textContent = 'Check your connection, then try again.';
       render();
       setTimeout(hideLoader, 180);
     });
@@ -86,6 +89,7 @@ function updateHeroHeroContent(movie) {
   const heroDesc = document.getElementById("heroDesc");
   const playBtn = document.querySelector('.btn-play');
   const infoBtn = document.querySelector('.btn-info');
+  const retryBtn = document.querySelector('[data-action="retryMovies"]');
 
   if (!heroTitle || !heroDesc || !playBtn || !infoBtn) return;
 
@@ -94,12 +98,14 @@ function updateHeroHeroContent(movie) {
     heroDesc.textContent = movie.description || "";
     playBtn.textContent = 'Play';
     infoBtn.textContent = 'More Info';
+    if (retryBtn) retryBtn.hidden = true;
     playBtn.onclick = () => openPlayer(movie);
   } else {
     heroTitle.textContent = "Welcome to StreamBox";
     heroDesc.textContent = "No movies yet. Upload your first blockbuster!";
     playBtn.textContent = 'Upload Movie';
     infoBtn.textContent = 'How to Upload';
+    if (retryBtn) retryBtn.hidden = false;
     playBtn.onclick = () => motionNavigate('/upload.html');
     infoBtn.onclick = () => alert('Go to Upload page (top-right + icon), select movie + thumbnail, add title!');
   }
@@ -171,6 +177,7 @@ function applyHeroImage(movie) {
 let heroIntervalId = null;
 let heroFadeTimer = null;
 let heroRotationIndex = 0;
+let heroPaused = false;
 
 function startHeroRotation() {
   if (heroIntervalId || !Array.isArray(allMovies) || allMovies.length < 1) return;
@@ -181,7 +188,7 @@ function startHeroRotation() {
   updateHeroHeroContent(allMovies[heroRotationIndex]);
 
   heroIntervalId = setInterval(() => {
-    if (!allMovies.length) return;
+    if (heroPaused || !allMovies.length) return;
 
     // Prefer movies that have heroBanner, but fallback to thumbnail
     const nextIndex = (heroRotationIndex + 1) % allMovies.length;
@@ -191,6 +198,14 @@ function startHeroRotation() {
     applyHeroImage(movie);
     updateHeroHeroContent(movie);
   }, 10000);
+}
+
+function pauseHeroRotation() {
+  heroPaused = true;
+}
+
+function resumeHeroRotation() {
+  heroPaused = false;
 }
 
 // kick it once after movies render
@@ -285,7 +300,7 @@ function render(){
   const continueSection = continueEl.closest('.section');
 
   // Render sections even when an individual thumbnail is unavailable.
-  const moviesWithPoster = allMovies.filter(m => !!m.thumbnail);
+  const availableMovies = allMovies.filter(m => m && typeof m === 'object');
 
   // Clear containers
   trendingEl.innerHTML = '';
@@ -314,11 +329,13 @@ function render(){
     });
   };
 
-  if (moviesWithPoster.length) {
+  if (availableMovies.length) {
     if (moviesSection) moviesSection.classList.remove('is-empty');
-    renderRow(moviesEl, moviesWithPoster.slice(0,12));
+    renderRow(moviesEl, availableMovies.slice(0,12));
 
-    const trendingList = moviesWithPoster.slice(5, 15);
+    const trendingList = availableMovies.length > 1
+      ? availableMovies.slice(1, 12).concat(availableMovies.slice(0, 1))
+      : availableMovies.slice(0, 1);
     if (trendingList.length) {
       if (trendingSection) trendingSection.classList.remove('is-empty');
       renderRow(trendingEl, trendingList);
@@ -338,7 +355,6 @@ function render(){
   let continueCount = 0;
   allMovies.forEach((m, idx) => {
     if (!localStorage.getItem("watch_"+m.id)) return;
-    if (!m.thumbnail) return;
     continueCount++;
     const card = createCard(m, "Resume");
     card.style.setProperty('--motion-index', String(idx % 8));
@@ -379,6 +395,7 @@ function openSearch(){
   if (!overlay) return;
 
   closeNavMenu();
+  pauseHeroRotation();
   overlay.style.display = 'flex';
   requestAnimationFrame(() => overlay.classList.add('show'));
 
@@ -396,12 +413,15 @@ function closeSearch(){
   overlay.classList.remove('show');
   window.setTimeout(() => {
     if (!overlay.classList.contains('show')) overlay.style.display = "none";
+    if (!overlay.classList.contains('show')) resumeHeroRotation();
   }, 240);
 }
 
 function setNavMenu(open) {
   const menuBtn = document.querySelector('.menu-btn');
   document.body.classList.toggle('nav-open', !!open);
+  if (open) pauseHeroRotation();
+  else if (!document.getElementById('searchOverlay')?.classList.contains('show')) resumeHeroRotation();
   if (menuBtn) {
     menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
     menuBtn.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
@@ -422,9 +442,9 @@ function liveSearch(val){
   res.innerHTML = "";
 
   const q = (val || "").toLowerCase().trim();
-  const moviesWithPoster = allMovies.filter(m => !!m.thumbnail);
+  const availableMovies = allMovies.filter(m => m && typeof m === 'object');
 
-  moviesWithPoster
+  availableMovies
     .filter(m => String(m.title || "").toLowerCase().includes(q))
     .forEach(m => {
       const card = createCard(m);
@@ -473,6 +493,15 @@ function init() {
   const navScrim = document.querySelector('.nav-scrim');
   if (navScrim) navScrim.addEventListener('click', closeNavMenu);
 
+  const hero = document.querySelector('.hero');
+  if (hero) {
+    hero.addEventListener('pointerenter', pauseHeroRotation);
+    hero.addEventListener('pointerleave', resumeHeroRotation);
+    hero.addEventListener('focusin', pauseHeroRotation);
+    hero.addEventListener('focusout', resumeHeroRotation);
+    hero.addEventListener('touchstart', pauseHeroRotation, { passive: true });
+  }
+
   document.querySelectorAll('.nav-links span').forEach(link => {
     link.addEventListener('click', closeNavMenu);
   });
@@ -484,6 +513,8 @@ function init() {
   // Hero Play button (CSP-safe; removes need for inline onclick)
   const heroPlayBtn = document.querySelector('[data-action="playFeatured"]');
   if (heroPlayBtn) heroPlayBtn.addEventListener('click', playFeatured);
+  const retryBtn = document.querySelector('[data-action="retryMovies"]');
+  if (retryBtn) retryBtn.addEventListener('click', loadMovies);
 
   // Admin button (second icon-btn)
   const adminBtn = document.querySelector('.nav-right .icon-btn:nth-child(2)');

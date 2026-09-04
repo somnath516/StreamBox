@@ -2,10 +2,10 @@
  * StreamBox PWA Service Worker - Enhanced Caching Strategy
  * Implements cache-first for static assets, network-first for dynamic content
  */
-const CACHE_NAME = 'streambox-v5';
-const STATIC_CACHE = 'streambox-static-v5';
-const DYNAMIC_CACHE = 'streambox-dynamic-v5';
-const IMAGE_CACHE = 'streambox-images-v5';
+const CACHE_NAME = 'streambox-v6';
+const STATIC_CACHE = 'streambox-static-v6';
+const DYNAMIC_CACHE = 'streambox-dynamic-v6';
+const IMAGE_CACHE = 'streambox-images-v6';
 
 // Static assets to precache (never change without version bump)
 const STATIC_ASSETS = [
@@ -19,7 +19,8 @@ const STATIC_ASSETS = [
   '/motion.js',
   '/netflix-ui.css',
   '/favicon.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/index.js'
 ];
 
 // Dynamic pages that should always be fresh
