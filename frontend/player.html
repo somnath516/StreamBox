@@ -69,15 +69,13 @@ body.motion-enhanced #video {
 
 /* FULLSCREEN */
 .fullscreen #video{
-  width:min(100vw, 177.7778vh) !important;
-  height:min(100vh, 56.25vw) !important;
-  top:50%;
-  left:50%;
-  /* Keep the video surface at 16:9 while fullscreen controls use the viewport. */
+  width:100% !important;
+  height:100% !important;
+  /* Keep consistent 16:9 surface even in fullscreen */
   aspect-ratio: 16 / 9 !important;
   object-fit:contain !important;
   border-radius:0 !important;
-  transform:translate(-50%, -50%) !important;
+  transform:none !important;
 }
 
 
