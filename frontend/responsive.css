@@ -58,16 +58,18 @@
    BASE RESET & FOUNDATION
    ===================================================== */
 
-/* Allow normal page scrolling again (fixes missing scrollbars) */
+/* Keep the page body as the only vertical scroll container. */
 html {
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: hidden;
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   word-wrap: break-word;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
