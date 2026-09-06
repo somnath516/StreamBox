@@ -58,18 +58,17 @@
    BASE RESET & FOUNDATION
    ===================================================== */
 
-/* Keep the page body as the only vertical scroll container. */
+/* Keep the document root as the only vertical scroll container. */
 html {
-  overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden !important;
   word-wrap: break-word;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
