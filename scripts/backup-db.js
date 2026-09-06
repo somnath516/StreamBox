@@ -1,9 +1,10 @@
 const fs = require('fs').promises;
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
+const config = require('../backend/services/config.service');
 
 const root = path.join(__dirname, '..');
-const dbPath = process.env.DB_PATH || path.join(root, 'data', 'streambox.db');
+const dbPath = process.env.DB_PATH || path.join(config.dirs.data, 'streambox.db');
 const backupDir = process.env.BACKUP_DIR || path.join(root, 'backups');
 
 function stamp() {

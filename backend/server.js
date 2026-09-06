@@ -27,8 +27,9 @@ let server;
 let shuttingDown = false;
 
 async function ensureDirs() {
+  const uniqueDirs = new Map(Object.entries(config.dirs).map(([key, dir]) => [path.resolve(dir), { key, dir }]));
   const results = await Promise.allSettled(
-    Object.entries(config.dirs).map(async ([key, dir]) => {
+    Array.from(uniqueDirs.values()).map(async ({ key, dir }) => {
       try {
         await fs.mkdir(dir, { recursive: true });
         // Verify writability

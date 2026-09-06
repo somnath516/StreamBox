@@ -36,7 +36,7 @@ const root = path.join(__dirname, '..', '..');
  * but we choose Linux-safe defaults matching the container filesystem.
  */
 const defaultLinuxBase = '/media';
-const defaultWindowsBase = 'E:\\StreamBox Database';
+const defaultWindowsBase = 'F:\\StreamBox Database';
 
 // Render runs on Linux. For local dev, default to the provided Windows SD-card root.
 // SD_BASE (if provided) still wins, but we normalize known legacy /app/media → /media.
@@ -68,22 +68,22 @@ const config = {
   phase6Probe: process.env.PHASE6_PROBE === '1',
   dirs: {
     movies: path.resolve(
-      process.env.MOVIES_BASE || path.join(mediaRoot, 'movies')
+      process.env.MOVIES_BASE || path.join(mediaRoot, 'Movies')
     ),
     subtitles: path.resolve(
-      process.env.SUBTITLES_BASE || path.join(mediaRoot, 'subtitles')
+      process.env.SUBTITLES_BASE || path.join(mediaRoot, 'Subtitles')
     ),
     thumbnails: path.resolve(
-      process.env.THUMBNAILS_BASE || path.join(mediaRoot, 'thumbnails')
+      process.env.THUMBNAILS_BASE || path.join(mediaRoot, 'Thumbnails')
     ),
 
-    // Preserve the required “hero banner” directory naming.
+    // Preserve the required directory naming.
     heroBanners: path.resolve(
-      process.env.HERO_BANNER_BASE || path.join(mediaRoot, 'hero banner')
+      process.env.HERO_BANNER_BASE || path.join(mediaRoot, 'Hero Bannner')
     ),
 
 
-    data: path.join(root, 'data'),
+    data: mediaRoot,
 
     // Used by card routes: /thumbnail-card and /subtitle-card
     // Must align with absolute dirs above.
