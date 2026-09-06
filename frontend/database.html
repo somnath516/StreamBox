@@ -183,6 +183,8 @@ body {
   font-weight: 800;
   white-space: nowrap;
   min-width: max-content;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 18px rgba(229, 9, 20, 0.18);
 }
 
 .stat-label {
@@ -653,11 +655,45 @@ function formatStorage(bytes) {
   return `${Math.round(mb)} MB`;
 }
 
+function animateStat(element, target, formatter = (value) => Math.round(value).toLocaleString()) {
+  if (!element || !Number.isFinite(target)) {
+    if (element) element.textContent = 'N/A';
+    return;
+  }
+
+  const previousFrame = Number(element.dataset.animationFrame);
+  if (Number.isInteger(previousFrame)) cancelAnimationFrame(previousFrame);
+
+  const start = Number.isFinite(Number(element.dataset.statValue))
+    ? Number(element.dataset.statValue)
+    : 0;
+  const duration = 900;
+  const startedAt = performance.now();
+
+  const tick = (now) => {
+    const progress = Math.min((now - startedAt) / duration, 1);
+    const eased = 1 - ((1 - progress) ** 3);
+    const value = start + ((target - start) * eased);
+    element.textContent = formatter(value);
+    element.dataset.statValue = String(value);
+
+    if (progress < 1) {
+      element.dataset.animationFrame = String(requestAnimationFrame(tick));
+    } else {
+      element.dataset.statValue = String(target);
+      element.dataset.animationFrame = '';
+      element.textContent = formatter(target);
+    }
+  };
+
+  element.dataset.animationFrame = String(requestAnimationFrame(tick));
+}
+
 
 async function updateStats() {
-  totalMoviesEl.textContent = allMovies.length;
+  animateStat(totalMoviesEl, allMovies.length);
   const complete = allMovies.filter(m=>m.movie && m.thumbnail).length;
-  completeMoviesEl.textContent = complete;
+  animateStat(completeMoviesEl, complete);
 
   // Fetch free storage from backend
   try {
@@ -665,9 +701,7 @@ async function updateStats() {
     const data = await res.json();
     console.log('Storage data received:', data);
     if (res.ok && data.status === 'OK' && Number.isFinite(Number(data.freeSpace))) {
-      const formatted = formatStorage(data.freeSpace);
-      console.log('Formatted storage:', { freeSpace: data.freeSpace, formatted });
-      freeStorageEl.textContent = formatted;
+      animateStat(freeStorageEl, Number(data.freeSpace), formatStorage);
     } else {
       freeStorageEl.textContent = 'N/A';
     }
