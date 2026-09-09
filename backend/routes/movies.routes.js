@@ -7,7 +7,7 @@ function isValidNumericId(id) {
   return /^\d+$/.test(String(id));
 }
 
-function createMoviesRouter({ db, upload }) {
+function createMoviesRouter({ db, upload, uploadQueue }) {
   const router = express.Router();
 
   router.options('/:id', auth, (req, res) => res.status(204).end());
@@ -60,6 +60,7 @@ function createMoviesRouter({ db, upload }) {
   );
 
   router.delete('/:id', auth, asyncHandler(async (req, res) => {
+    await uploadQueue?.remove(Number(req.params.id));
     const result = await db.deleteMovie(req.params.id);
     if (result.changes === 0) return sendError(res, 404, 'Not found');
     return res.json({ success: true });

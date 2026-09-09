@@ -51,11 +51,15 @@ async function initDb() {
     heroBanner TEXT,
     duration INTEGER DEFAULT 0,
     category TEXT DEFAULT 'Movie',
+    uploadStatus TEXT DEFAULT 'ready',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
     views INTEGER DEFAULT 0
   )`);
 
   await run('ALTER TABLE movies ADD COLUMN heroBanner TEXT').catch((err) => {
+    if (!/duplicate column name/i.test(err.message || '')) throw err;
+  });
+  await run('ALTER TABLE movies ADD COLUMN uploadStatus TEXT DEFAULT \'ready\'').catch((err) => {
     if (!/duplicate column name/i.test(err.message || '')) throw err;
   });
   await run('CREATE INDEX IF NOT EXISTS idx_title ON movies(title)');
@@ -81,7 +85,7 @@ function getDb() {
 }
 
 async function getMovies() {
-  return all('SELECT * FROM movies ORDER BY createdAt DESC');
+  return all("SELECT * FROM movies WHERE uploadStatus IS NULL OR uploadStatus = 'ready' ORDER BY createdAt DESC");
 }
 
 async function addMovie(movie) {
@@ -99,11 +103,12 @@ async function addMovie(movie) {
       thumbnail: toBase(movie.thumbnail),
       heroBanner: toBase(movie.heroBanner || null),
       category: movie.category || 'Movie',
+      uploadStatus: movie.uploadStatus || 'ready',
     };
 
     const result = await run(
-      `INSERT INTO movies (title, description, movie, subtitle, thumbnail, heroBanner, category)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO movies (title, description, movie, subtitle, thumbnail, heroBanner, category, uploadStatus)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         normalized.title,
         normalized.description,
@@ -112,6 +117,7 @@ async function addMovie(movie) {
         normalized.thumbnail,
         normalized.heroBanner,
         normalized.category,
+        normalized.uploadStatus,
       ]
     );
     await run('COMMIT');
@@ -122,10 +128,20 @@ async function addMovie(movie) {
     logger.error('db_movie_insert_failed', { code: err.code, message: err.message, movie: movie && movie.movie });
     throw err;
   }
+
+}
+
+async function updateUploadStatus(id, uploadStatus) {
+  const result = await run('UPDATE movies SET uploadStatus = ? WHERE id = ?', [uploadStatus, id]);
+  return { id, changes: result.changes };
 }
 
 async function getMovieById(id) {
   return get('SELECT * FROM movies WHERE id = ?', [id]);
+}
+
+async function getPendingUploads() {
+  return all("SELECT * FROM movies WHERE uploadStatus IN ('pending', 'copying', 'failed')");
 }
 
 async function unlinkIfPresent(filename, dir) {
@@ -302,7 +318,9 @@ module.exports = {
   getMediaDiagnostics,
   getMovieById,
   getMovies,
+  getPendingUploads,
   initDb,
   recoverOrphanMovies,
   updateMovie,
+  updateUploadStatus,
 };

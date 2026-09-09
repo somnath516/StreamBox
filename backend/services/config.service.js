@@ -98,6 +98,9 @@ const config = {
     public: path.join(root, 'frontend'),
     uploads: path.join(root, 'uploads'),
     uploadTemp: path.join(root, 'uploads', 'tmp'),
+    // Keep the incoming upload on the local disk so the browser is not blocked
+    // by the slower removable database drive.
+    uploadCache: path.join(root, 'uploads', 'cache'),
   },
 };
 

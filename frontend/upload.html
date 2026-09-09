@@ -1091,7 +1091,7 @@ function finalize(success, message, extra) {
 
     // 2xx: only treat as success when backend confirms success:true
     if (parsed && parsed.success === true) {
-      finalize(true, 'Upload saved to database!', { parsed });
+      finalize(true, 'Upload received; copying to the movie database in the background.', { parsed });
       safeReleaseWakeLock();
       return;
     }

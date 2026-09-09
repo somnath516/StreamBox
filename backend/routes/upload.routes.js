@@ -15,7 +15,7 @@ const {
 
 const { getUploadSessionRegistry } = require('../uploadSessionRegistry');
 
-function createUploadRouter({ db, upload, config }) {
+function createUploadRouter({ db, upload, config, uploadQueue }) {
   const router = express.Router();
   const uploadLimiter = rateLimit({
     windowMs: Number(process.env.UPLOAD_WINDOW_MS || 15 * 60 * 1000),
@@ -91,8 +91,6 @@ function createUploadRouter({ db, upload, config }) {
       }
 
       await validateUpload(req, config.dirs);
-      await renameUploadedFiles(req, config.dirs);
-
       if (uploadSessionId) {
         // Promotion/finalization is handled after successful DB insert via registry.promoteSession.
       }
@@ -106,9 +104,22 @@ function createUploadRouter({ db, upload, config }) {
         thumbnail: req.files.thumbnail?.[0]?.filename || null,
         heroBanner: req.files.heroBanner?.[0]?.filename || null,
         category: req.body.category || 'Movie',
+        uploadStatus: 'pending',
       };
 
       const savedMovie = await db.addMovie(newMovie);
+      uploadQueue.enqueue({
+        movieId: savedMovie.id,
+        files: flattenUploadedFiles(req).map((file) => {
+          const dirKey = file.fieldname === 'movie' ? 'movies'
+            : file.fieldname === 'subtitle' ? 'subtitles'
+              : file.fieldname === 'heroBanner' ? 'heroBanners' : 'thumbnails';
+          return {
+            source: file.path,
+            destination: path.join(config.dirs[dirKey], file.filename),
+          };
+        }),
+      });
 
       logger.info('[UPLOAD] atomic_upload_completed', {
         requestId,
@@ -210,7 +221,11 @@ function createUploadRouter({ db, upload, config }) {
     asyncHandler(async (req, res) => {
       try {
         const result = await atomicUpload(req, db, config);
-        return res.status(201).json({ success: true, message: 'Upload successful', movie: result.movie });
+        return res.status(201).json({
+          success: true,
+          message: 'Upload received; copying to the movie database in the background',
+          movie: result.movie,
+        });
       } catch (err) {
         const statusCode = err && err.statusCode ? err.statusCode : 500;
         return sendError(res, statusCode, err && err.message ? err.message : 'Upload processing failed', req.id);

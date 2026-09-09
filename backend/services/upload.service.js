@@ -89,7 +89,7 @@ function createUpload(config) {
     destination: (req, file, cb) => {
       const dirKey = dirKeyForField(file.fieldname);
       // Write directly to the configured folder (no extra subfolder)
-      const dest = effectiveDirs[dirKey] || effectiveDirs.movies;
+      const dest = effectiveDirs.uploadCache || effectiveDirs[dirKey] || effectiveDirs.movies;
       fsSync.mkdirSync(dest, { recursive: true });
       cb(null, dest);
     },
@@ -106,7 +106,11 @@ function createUpload(config) {
       const dir = effectiveDirs[dirKey] || effectiveDirs.movies;
       let finalName = `${title}${suffix}${safeExt}`;
       let counter = 2;
-      while (fsSync.existsSync(path.join(dir, finalName))) {
+      const cacheDir = effectiveDirs.uploadCache || effectiveDirs.uploadTemp;
+      while (
+        fsSync.existsSync(path.join(dir, finalName)) ||
+        fsSync.existsSync(path.join(cacheDir, finalName))
+      ) {
         finalName = `${title}${suffix} (${counter++})${safeExt}`;
       }
 

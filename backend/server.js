@@ -21,6 +21,7 @@ const requestId = require('./middleware/requestId');
 const createSecurityHeaders = require('./middleware/securityHeaders');
 const { createErrorContractHandler, sendError } = require('./middleware/errorContract');
 const logger = require('./utils/logger');
+const { createUploadQueue } = require('./services/upload-queue.service');
 
 const app = express();
 let server;
@@ -177,6 +178,8 @@ function createApp() {
       return db.initDb();
     });
   const upload = createUpload(config);
+  const uploadQueue = createUploadQueue({ db, dirs: config.dirs });
+  app.locals.uploadQueue = uploadQueue;
   const apiLimiter = jsonOnlyLimiter();
 
   app.disable('x-powered-by');
@@ -206,8 +209,8 @@ function createApp() {
   app.head('/admin', auth, (req, res) => res.status(204).end());
   app.get('/admin', auth, (req, res) => res.status(200).json({ ok: true }));
 
-  const moviesRouter = createMoviesRouter({ db, upload });
-  const uploadRouter = createUploadRouter({ db, upload, config });
+  const moviesRouter = createMoviesRouter({ db, upload, uploadQueue });
+  const uploadRouter = createUploadRouter({ db, upload, config, uploadQueue });
   const healthRouter = createHealthRouter({ db });
   const mediaRouter = createMediaRouter({ config });
 
@@ -299,6 +302,7 @@ if (require.main === module) {
         // createApp schedules db.initDb via `startup`; if it already completed, this is still safe.
         // We call db.initDb() explicitly again to guarantee visibility in logs if it previously failed.
         await db.initDb();
+        await app.locals.uploadQueue.recoverPending();
         if (process.env.RECOVER_ORPHAN_MOVIES === '1' && db.recoverOrphanMovies) {
           await db.recoverOrphanMovies();
         }

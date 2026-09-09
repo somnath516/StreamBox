@@ -624,6 +624,16 @@ video::cue {
   overflow: hidden !important;
   overscroll-behavior: contain;
 }
+
+/* responsive.css enables document scrolling for the other pages. The player
+   is a fixed viewport surface and must override that shared rule. */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
 </style>
 </head>
 
