@@ -25,7 +25,7 @@ function loadMovies(){
 
   setTimeout(hideLoader, 1600);
 
-  fetch("/movies")
+  fetch("/movies", { cache: "no-store", headers: { Accept: "application/json" } })
     .then(async (res) => {
       if (!res || !res.ok) {
         console.error('movies_fetch_bad_response', {

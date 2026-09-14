@@ -19,6 +19,9 @@ function createMoviesRouter({ db, upload }) {
   });
 
   router.get('/', asyncHandler(async (req, res) => {
+    if (typeof db.recoverOrphanMovies === 'function') await db.recoverOrphanMovies();
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     const movies = await db.getMovies();
     return res.json(movies);
   }));

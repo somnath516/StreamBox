@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5.0, minimum-scale=1.0"/>
-<meta name="theme-color" content="#141414">
+<meta name="theme-color" content="#0b0b0b">
 <title>Stream Box</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="128x128" href="/logos/icon-192.png">
@@ -20,13 +20,21 @@
 <style>
 :root{
   --red:#E50914;
+  --red-dim:#b0060f;
+  --red-glow:rgba(229,9,20,.35);
   --bg:#141414;
+  --bg-deep:#0b0b0b;
+  --bg-elevated:#1c1c1c;
+  --bg-card:#181818;
   --grey:#b3b3b3;
+  --grey-dim:#8c8c8c;
+  --hairline:rgba(255,255,255,.09);
 
   /* Unified OTT brand tokens */
   --brand-gap:8px;
   --brand-gap-lg:12px;
   --brand-radius:12px;
+  --brand-radius-sm:6px;
   --brand-blur:10px;
   --brand-transition:260ms;
   --brand-ease:cubic-bezier(.22,.9,.24,1);
@@ -44,10 +52,12 @@
 
 *{margin:0;padding:0;box-sizing:border-box}
 
+html{ scroll-behavior:smooth; }
+
 body{
   background:var(--bg);
   color:#fff;
-  font-family:"Segoe UI",sans-serif;
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
   overflow-x:hidden;
   overflow-y:auto;
   -webkit-font-smoothing:antialiased;
@@ -58,15 +68,37 @@ body.nav-open{
   overflow:hidden;
 }
 
+::selection{ background:var(--red); color:#fff; }
+
+/* subtle top-to-bottom vignette so sections feel like one cinematic canvas
+   rather than flat stacked blocks */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  background:radial-gradient(1400px 700px at 50% -8%, rgba(229,9,20,.05), transparent 60%);
+}
+
 /* LOADER */
 #loading{
   position:fixed;inset:0;
-  background:var(--red);
+  background:var(--bg-deep);
   display:flex;align-items:center;justify-content:center;
   z-index:9999;
   transition:opacity var(--motion-slow) var(--motion-cinema), transform var(--motion-slow) var(--motion-cinema);
   will-change:opacity, transform;
 }
+#loading::after{
+  content:'';
+  width:34px;height:34px;
+  border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.14);
+  border-top-color:var(--red);
+  animation:loaderSpin .8s linear infinite;
+}
+@keyframes loaderSpin{ to{ transform:rotate(360deg); } }
 #loading.fade-out{opacity:0;pointer-events:none;transform:scale(1.015)}
 
 /* NAVBAR */
@@ -81,8 +113,16 @@ body.nav-open{
   align-items:center;
   background:linear-gradient(to bottom, rgba(0,0,0,.92), rgba(0,0,0,.18) 78%, transparent);
   z-index:1000;
-  transition:background var(--motion-med) var(--motion-cinema), transform var(--motion-med) var(--motion-cinema);
+  transition:background var(--motion-med) var(--motion-cinema), transform var(--motion-med) var(--motion-cinema), box-shadow var(--motion-med) var(--motion-cinema);
   will-change:background, transform;
+}
+
+.navbar.scrolled{
+  background:rgba(10,10,10,.92);
+  backdrop-filter:blur(var(--brand-blur));
+  -webkit-backdrop-filter:blur(var(--brand-blur));
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+  border-bottom:1px solid var(--hairline);
 }
 
 .nav-left{
@@ -97,6 +137,7 @@ body.nav-open{
   color:var(--red);
   font-size:1.8rem;
   font-weight:900;
+  letter-spacing:-0.02em;
 }
 
 .nav-logo{
@@ -120,10 +161,13 @@ body.nav-open{
 }
 
 
-
-
+.nav-links{
+  display:flex;
+  align-items:center;
+}
 
 .nav-links span{
+  position:relative;
   margin-right:22px;
   color:#cfcfcf;
   font-size:.95rem;
@@ -131,11 +175,25 @@ body.nav-open{
   transition:opacity var(--brand-transition) var(--brand-ease), color var(--brand-transition) var(--brand-ease), transform var(--brand-transition) var(--brand-ease);
   letter-spacing:0.05px;
   opacity:var(--brand-nav-opacity);
-  }
+}
+
+.nav-links span::after{
+  content:'';
+  position:absolute;
+  left:0; right:0; bottom:-6px;
+  height:2px;
+  background:var(--red);
+  transform:scaleX(0);
+  transform-origin:left;
+  transition:transform var(--motion-fast) var(--motion-cinema);
+}
 
 .nav-links span:hover{
   color:#fff;
   transform:translate3d(0,-1px,0);
+}
+.nav-links span:hover::after{
+  transform:scaleX(1);
 }
 
 .menu-btn{
@@ -162,12 +220,15 @@ body.nav-open{
   fill:none;
   stroke-width:2;
   stroke-linecap:round;
+  transition:transform var(--motion-fast) var(--motion-cinema);
 }
+body.nav-open .menu-btn svg{ transform:rotate(90deg); }
 
 .nav-scrim{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.58);
+  backdrop-filter:blur(2px);
   opacity:0;
   pointer-events:none;
   transition:opacity var(--motion-med) var(--motion-cinema);
@@ -178,6 +239,7 @@ body.nav-open{
 .nav-right{
   display:flex;
   gap:14px;
+  align-items:center;
 }
 
 .icon-btn{
@@ -197,6 +259,10 @@ body.nav-open{
 }
 .icon-btn:active{
   transform:scale(.94);
+}
+.icon-btn:focus-visible{
+  outline:2px solid #fff;
+  outline-offset:2px;
 }
 
 /* FIXED SVG */
@@ -245,6 +311,17 @@ body.nav-open{
   pointer-events:none;
 }
 
+/* extra bottom feather so hero melts into the sections below instead of
+   ending on a hard edge */
+.hero-fade{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  height:140px;
+  background:linear-gradient(to bottom, transparent, var(--bg) 92%);
+  z-index:1;
+  pointer-events:none;
+}
+
 
 /* Keep hero background images behind the overlay to avoid edge gaps */
 .hero-background{
@@ -290,7 +367,7 @@ body.nav-open{
   top:50%;
   left:60px;
   transform:translateY(-70%);
-  max-width:400px;
+  max-width:440px;
   z-index:2;
   opacity:0;
   animation:heroContentIn .72s var(--motion-cinema) .12s forwards;
@@ -302,6 +379,16 @@ body.nav-open{
   to{ opacity:1; transform:translate3d(0,-70%,0); }
 }
 
+.hero-eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  color:var(--red);
+  font-weight:700;
+  font-size:.82rem;
+  margin-bottom:14px;
+}
+.hero-eyebrow svg{ width:15px; height:15px; fill:var(--red); }
 
 .hero-title{
   font-size:3rem;
@@ -309,6 +396,23 @@ body.nav-open{
   letter-spacing:0;
   line-height:1.05;
   text-shadow:0 12px 42px rgba(0,0,0,.55);
+}
+
+.hero-meta{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top:14px;
+  color:#d5d5d5;
+  font-size:.88rem;
+}
+.hero-meta .dot{
+  width:3px;height:3px;border-radius:50%;
+  background:var(--grey-dim);
+}
+.hero-match{
+  color:#4ade80;
+  font-weight:700;
 }
 
 .hero-desc{
@@ -323,30 +427,52 @@ body.nav-open{
 }
 
 .btn{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
   padding:10px 22px;
   border:none;
   font-weight:600;
+  font-size:.98rem;
   cursor:pointer;
   border-radius:4px;
   transition:background var(--motion-fast) var(--motion-cinema), transform var(--motion-fast) var(--motion-cinema), opacity var(--motion-fast) var(--motion-cinema), box-shadow var(--motion-fast) var(--motion-cinema);
   will-change:transform;
 }
+.btn svg{ width:18px; height:18px; }
 .btn:hover{ transform:translate3d(0,-2px,0) scale(1.025); }
 .btn:active{ transform:scale(.97); }
+.btn:focus-visible{
+  outline:2px solid #fff;
+  outline-offset:3px;
+}
 
 .btn-play{
-  background:white;
-  color:black;
+  background:#fff;
+  color:#000;
 }
-.btn-play:hover{background:#ddd;}
+.btn-play svg{ fill:#000; stroke:none; }
+.btn-play:hover{background:#e2e2e2;}
 
 .btn-info{
-  background:rgba(109,109,110,.6);
+  background:rgba(109,109,110,.55);
+  color:#fff;
+  backdrop-filter:blur(4px);
 }
-.btn-info:hover{background:rgba(109,109,110,.85);}
+.btn-info svg{ stroke:#fff; fill:none; }
+.btn-info:hover{background:rgba(109,109,110,.8);}
+
+.btn-retry{
+  background:transparent;
+  color:#fff;
+  border:1.5px solid rgba(255,255,255,.5) !important;
+}
+.btn-retry:hover{ border-color:#fff !important; background:rgba(255,255,255,.08); }
 
 /* SECTIONS */
 .section{
+  position:relative;
+  z-index:1;
   padding:26px 40px;
   content-visibility:auto;
   contain-intrinsic-size:360px;
@@ -354,8 +480,11 @@ body.nav-open{
 
 .section-title{
   font-size:1.2rem;
+  font-weight:700;
   margin-bottom:10px;
   letter-spacing:.01em;
+  padding-left:14px;
+  border-left:3px solid var(--red);
   transition:color var(--motion-fast) var(--motion-cinema), transform var(--motion-fast) var(--motion-cinema);
 }
 
@@ -363,12 +492,16 @@ body.nav-open{
 .section.is-empty{ display:none; }
 
 /* ROW (Netflix-style carousel) */
+.row-wrap{
+  position:relative;
+}
+
 .row{
   display:flex;
   gap:14px;
   overflow-x:auto;
   overflow-y:visible;
-  padding:14px 0 18px;
+  padding:14px 4px 18px;
   scroll-snap-type:x proximity;
   scroll-behavior:smooth;
 
@@ -380,9 +513,52 @@ body.nav-open{
 }
 .row::-webkit-scrollbar{width:0;height:0}
 
+/* soft edge fades so the row reads as "more to scroll" rather than a hard cut */
+.row-wrap::before,
+.row-wrap::after{
+  content:'';
+  position:absolute;
+  top:14px; bottom:18px;
+  width:48px;
+  z-index:2;
+  pointer-events:none;
+  opacity:0;
+  transition:opacity var(--motion-fast) var(--motion-cinema);
+}
+.row-wrap::before{
+  left:0;
+  background:linear-gradient(to right, var(--bg), transparent);
+}
+.row-wrap::after{
+  right:0;
+  background:linear-gradient(to left, var(--bg), transparent);
+}
+.row-wrap:hover::before,
+.row-wrap:hover::after{ opacity:1; }
 
-
-
+.row-arrow{
+  position:absolute;
+  top:14px; bottom:18px;
+  width:44px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(20,20,20,.55);
+  border:0;
+  color:#fff;
+  cursor:pointer;
+  z-index:3;
+  opacity:0;
+  transition:opacity var(--motion-fast) var(--motion-cinema), background var(--motion-fast) var(--motion-cinema);
+}
+.row-wrap:hover .row-arrow{ opacity:1; }
+.row-arrow:hover{ background:rgba(20,20,20,.85); }
+.row-arrow svg{ width:22px; height:22px; stroke:#fff; fill:none; stroke-width:2.5; }
+.row-arrow.prev{ left:0; }
+.row-arrow.next{ right:0; }
+@media (hover:none){
+  .row-arrow{ display:none; }
+}
 
 .row > .card{
   scroll-snap-align:start;
@@ -402,9 +578,9 @@ body.nav-open{
   width:100%;
   height:260px;
   object-fit:cover;
-  border-radius:4px;
+  border-radius:6px;
   box-shadow:0 10px 28px rgba(0,0,0,.28);
-  background:#111;
+  background:linear-gradient(135deg, #1a1a1a, #0e0e0e);
 }
 
 /* subtle premium hover */
@@ -451,7 +627,8 @@ body.nav-open{
 #searchOverlay{
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.96);
+  background:rgba(8,8,8,.97);
+  backdrop-filter:blur(6px);
   display:none;
   flex-direction:column;
   padding:40px;
@@ -467,14 +644,38 @@ body.nav-open{
   transform:translateY(0);
 }
 
+.search-field{
+  position:relative;
+  max-width:640px;
+  width:100%;
+  margin-bottom:24px;
+}
+.search-field svg{
+  position:absolute;
+  left:16px; top:50%;
+  transform:translateY(-50%);
+  width:18px; height:18px;
+  stroke:var(--grey-dim);
+  fill:none;
+  stroke-width:2;
+  pointer-events:none;
+}
+
 #searchBox{
-  padding:16px;
+  width:100%;
+  padding:16px 16px 16px 46px;
   font-size:18px;
-  margin-bottom:20px;
-  background:#222;
-  border:none;
+  background:var(--bg-elevated);
+  border:1.5px solid var(--hairline);
+  border-radius:var(--brand-radius-sm);
   color:#fff;
   outline:none;
+  transition:border-color var(--motion-fast) var(--motion-cinema), background var(--motion-fast) var(--motion-cinema);
+}
+#searchBox::placeholder{ color:var(--grey-dim); }
+#searchBox:focus{
+  border-color:var(--red);
+  background:#212121;
 }
 
 #searchResults{
@@ -484,15 +685,56 @@ body.nav-open{
 }
 
 .close-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
   border:0;
   background:transparent;
   padding:0;
   font:inherit;
-  margin-bottom:15px;
+  margin-bottom:22px;
   cursor:pointer;
   color:#ccc;
+  transition:color var(--motion-fast) var(--motion-cinema);
 }
 .close-btn:hover{color:#fff}
+.close-btn svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; }
+
+/* FOOTER */
+.site-footer{
+  position:relative;
+  z-index:1;
+  margin-top:20px;
+  padding:44px 40px 36px;
+  border-top:1px solid var(--hairline);
+  color:var(--grey-dim);
+}
+.footer-links{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(120px,1fr));
+  gap:14px 24px;
+  max-width:720px;
+  margin-bottom:26px;
+}
+.footer-links a{
+  color:var(--grey-dim);
+  text-decoration:none;
+  font-size:.85rem;
+  transition:color var(--motion-fast) var(--motion-cinema);
+}
+.footer-links a:hover{ color:#fff; text-decoration:underline; }
+.footer-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  font-size:.8rem;
+}
+@media (max-width:600px){
+  .footer-links{ grid-template-columns:repeat(2, minmax(120px,1fr)); }
+}
+
 .sr-only{
   position:absolute;
   width:1px;
@@ -544,6 +786,7 @@ body.nav-open{
     font-size:1.05rem;
     opacity:.92;
   }
+  .nav-links span::after{ display:none; }
 
   body.nav-open .nav-links{
     transform:translateX(0);
@@ -590,6 +833,8 @@ body.nav-open{
   .section{
     padding:clamp(18px, 3vw, 22px) clamp(14px, 3vw, 18px);
   }
+
+  .footer-links{ max-width:none; }
 }
 
 @media (prefers-reduced-motion: reduce){
@@ -614,10 +859,10 @@ body.nav-open{
 
 <body>
 
-<div id="loading">Loading...</div>
+<div id="loading" role="status" aria-label="Loading"><span class="sr-only">Loading…</span></div>
 
 <!-- NAVBAR -->
-<div class="navbar">
+<div class="navbar" id="navbar">
   <div class="nav-left">
     <div class="brand-unit">
       <div class="logo" aria-label="Stream Box"><span style="color:#fff;">Stream</span><span style="color:var(--red);">Box</span></div>
@@ -669,43 +914,136 @@ body.nav-open{
   </div>
 
   <div class="hero-content">
+    <div class="hero-eyebrow">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 14.5 8.5 21 9.3 16 13.9 17.5 20.5 12 17 6.5 20.5 8 13.9 3 9.3 9.5 8.5Z"/></svg>
+      <span>Featured Today</span>
+    </div>
 
     <h1 id="heroTitle" class="hero-title">Loading...</h1>
+
     <p id="heroDesc" class="hero-desc"></p>
 
     <div class="hero-buttons">
-      <button class="btn btn-play" data-action="playFeatured" type="button">Play</button>
-      <button class="btn btn-info">More Info</button>
+      <button class="btn btn-play" data-action="playFeatured" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
+        Play
+      </button>
+      <button class="btn btn-info" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>
+        More Info
+      </button>
       <button class="btn btn-retry" data-action="retryMovies" type="button" hidden>Retry</button>
     </div>
   </div>
+
+  <div class="hero-fade" aria-hidden="true"></div>
 </div>
 
 <!-- SEARCH -->
 <div id="searchOverlay">
-  <button class="close-btn" type="button" aria-label="Close search">← Back</button>
+  <button class="close-btn" type="button" aria-label="Close search">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 5 15M5 5l10 10"/></svg>
+    Back
+  </button>
   <label class="sr-only" for="searchBox">Search movies</label>
-  <input id="searchBox" placeholder="Search movies..." autocomplete="off">
+  <div class="search-field">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.8 18.1a7.3 7.3 0 1 1 5.2-2.1"></path><path d="M16.2 16.2 21 21"></path></svg>
+    <input id="searchBox" placeholder="Search movies..." autocomplete="off">
+  </div>
   <div id="searchResults"></div>
 </div>
 
 <!-- SECTIONS -->
   <div class="section">
     <h2 class="section-title">Today's Top Picks for You</h2>
-    <div class="row" id="movies" role="list" aria-label="Today's top picks"></div>
-  </div>
-  
-  <div class="section">
-    <h2 class="section-title">Trending Now</h2>
-    <div class="row" id="trending" role="list" aria-label="Trending movies"></div>
-  </div>
-  
-  <div class="section">
-    <h2 class="section-title">Continue Watching</h2>
-    <div class="row" id="continue" role="list" aria-label="Continue watching"></div>
+    <div class="row-wrap">
+      <button class="row-arrow prev" type="button" aria-label="Scroll left" data-scroll-target="movies">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+      </button>
+      <div class="row" id="movies" role="list" aria-label="Today's top picks"></div>
+      <button class="row-arrow next" type="button" aria-label="Scroll right" data-scroll-target="movies">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
   </div>
 
+  <div class="section">
+    <h2 class="section-title">Trending Now</h2>
+    <div class="row-wrap">
+      <button class="row-arrow prev" type="button" aria-label="Scroll left" data-scroll-target="trending">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+      </button>
+      <div class="row" id="trending" role="list" aria-label="Trending movies"></div>
+      <button class="row-arrow next" type="button" aria-label="Scroll right" data-scroll-target="trending">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Continue Watching</h2>
+    <div class="row-wrap">
+      <button class="row-arrow prev" type="button" aria-label="Scroll left" data-scroll-target="continue">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7"/></svg>
+      </button>
+      <div class="row" id="continue" role="list" aria-label="Continue watching"></div>
+      <button class="row-arrow next" type="button" aria-label="Scroll right" data-scroll-target="continue">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+<footer class="site-footer">
+  <div class="footer-links">
+    <a href="#">FAQ</a>
+    <a href="#">Help Centre</a>
+    <a href="#">Account</a>
+    <a href="#">Media Centre</a>
+    <a href="#">Investor Relations</a>
+    <a href="#">Jobs</a>
+    <a href="#">Cookie Preferences</a>
+    <a href="#">Legal Notices</a>
+  </div>
+  <div class="footer-meta">
+    <span>&copy; <span id="footerYear">2026</span> StreamBox</span>
+  </div>
+</footer>
+
 <script src="/index.js?v=6" defer></script>
+
+<script>
+  // ---- Presentation-only enhancements. Purely additive: doesn't touch
+  // any element that index.js reads from/writes to, and fails silently
+  // if something isn't present yet. ----
+  (function(){
+    // Navbar gains a solid/blurred background once the page scrolls,
+    // so it stays legible over any hero image.
+    var nav = document.getElementById('navbar');
+    if (nav) {
+      var onScroll = function(){
+        if (window.scrollY > 8) nav.classList.add('scrolled');
+        else nav.classList.remove('scrolled');
+      };
+      window.addEventListener('scroll', onScroll, { passive:true });
+      onScroll();
+    }
+
+    // Row arrow buttons: purely cosmetic scroll helpers, independent of
+    // whatever renders the cards inside each row.
+    document.querySelectorAll('.row-arrow').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-scroll-target');
+        var row = document.getElementById(id);
+        if (!row) return;
+        var amount = Math.round(row.clientWidth * 0.85);
+        row.scrollBy({ left: btn.classList.contains('prev') ? -amount : amount, behavior:'smooth' });
+      });
+    });
+
+    var yearEl = document.getElementById('footerYear');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+  })();
+</script>
 
 </body>
 </html>

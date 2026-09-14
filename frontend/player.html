@@ -26,10 +26,26 @@ html, body{
   margin:0;
   background:#000;
   font-family:Arial, sans-serif;
+  width:100%;
+  height:100%;
 
   /* Player uses fixed fullscreen layout; keep overflow hidden to avoid scrollbars */
-  overflow:hidden;
+  overflow:hidden !important;
   overscroll-behavior: contain;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar{
+  width:0;
+  height:0;
+  display:none;
+}
+
+body{
+  position:fixed;
+  inset:0;
 }
 
 
@@ -470,7 +486,13 @@ body.motion-enhanced #video {
 
 /* The pointer follows the same idle lifecycle as the player chrome. */
 body:not(.show),
-body:not(.show) *{
+body:not(.show) *,
+body.player-idle,
+body.player-idle *,
+html:fullscreen,
+html:fullscreen *,
+body:fullscreen,
+body:fullscreen *{
   cursor:none !important;
 }
 
@@ -623,6 +645,33 @@ video::cue {
 :-webkit-full-screen html {
   overflow: hidden !important;
   overscroll-behavior: contain;
+}
+
+html:fullscreen,
+body:fullscreen,
+html:-webkit-full-screen,
+body:-webkit-full-screen{
+  width:100vw;
+  height:100vh;
+  overflow:hidden !important;
+  scrollbar-width:none;
+  -ms-overflow-style:none;
+}
+
+html:fullscreen body,
+html:-webkit-full-screen body{
+  width:100%;
+  height:100%;
+  overflow:hidden !important;
+}
+
+html:fullscreen::-webkit-scrollbar,
+body:fullscreen::-webkit-scrollbar,
+html:-webkit-full-screen::-webkit-scrollbar,
+body:-webkit-full-screen::-webkit-scrollbar{
+  width:0;
+  height:0;
+  display:none;
 }
 </style>
 </head>
@@ -881,16 +930,20 @@ video::cue {
 
   // UI hide/show
   let hideTimer;
-  function showUI() {
-    document.body.classList.add('show');
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => {
-      document.body.classList.remove('show');
-      volumeControl?.classList.remove('is-open');
-    }, 2000);
+  function hideUI() {
+    document.body.classList.remove('show');
+    document.body.classList.add('player-idle');
+    volumeControl?.classList.remove('is-open');
   }
 
-  ['mousemove', 'click'].forEach(ev => document.addEventListener(ev, showUI));
+  function showUI() {
+    document.body.classList.add('show');
+    document.body.classList.remove('player-idle');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideUI, 2000);
+  }
+
+  ['pointermove', 'mousemove', 'click'].forEach(ev => document.addEventListener(ev, showUI));
   document.addEventListener('touchstart', showUI, { passive: true });
   document.addEventListener('focusin', () => {
     showUI();
@@ -906,6 +959,7 @@ video::cue {
   }, { passive: true }));
 
   videoEl.addEventListener('mousemove', showUI);
+  videoEl.addEventListener('pointermove', showUI);
   videoEl.addEventListener('touchstart', showUI);
   showUI();
 
@@ -1008,7 +1062,9 @@ video::cue {
 
   document.addEventListener('fullscreenchange', () => {
     document.body.classList.toggle('fullscreen', !!document.fullscreenElement);
+    document.documentElement.classList.toggle('fullscreen', !!document.fullscreenElement);
     updateFullscreenIcon();
+    showUI();
   });
 
   function updateFullscreenIcon() {

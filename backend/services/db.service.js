@@ -72,6 +72,8 @@ async function initDb() {
   const diagnostics = await getMediaDiagnostics();
   logger.info('startup_diagnostics', diagnostics);
 
+  await recoverOrphanMovies();
+
   return db;
 }
 
@@ -81,7 +83,7 @@ function getDb() {
 }
 
 async function getMovies() {
-  return all('SELECT * FROM movies ORDER BY createdAt DESC');
+  return all('SELECT * FROM movies ORDER BY createdAt DESC, id DESC');
 }
 
 async function addMovie(movie) {
@@ -263,6 +265,8 @@ async function getMediaDiagnostics() {
 async function recoverOrphanMovies() {
   const diagnostics = await getMediaDiagnostics();
   const recovered = [];
+  const thumbnailFiles = await listBasenames(config.dirs.thumbnails, new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif']));
+  const heroBannerFiles = await listBasenames(config.dirs.heroBanners, new Set(['.jpg', '.jpeg', '.png', '.webp', '.avif']));
 
   for (const filename of diagnostics.orphanMovies) {
     const fullPath = path.join(config.dirs.movies, filename);
@@ -274,14 +278,20 @@ async function recoverOrphanMovies() {
       .replace(/^\d+-[a-z0-9]+-/i, '')
       .replace(/[._-]+/g, ' ')
       .trim() || 'Recovered Movie';
+    const titleStem = path.basename(filename, path.extname(filename)).replace(/[._-]+/g, ' ').trim();
+    const matchingAsset = (files, suffix) => files.find((asset) => {
+      const assetStem = path.basename(asset, path.extname(asset)).replace(/[._-]+/g, ' ').trim();
+      return assetStem.toLowerCase() === `${titleStem} ${suffix}`.toLowerCase()
+        || assetStem.toLowerCase().startsWith(`${titleStem} ${suffix}`.toLowerCase());
+    });
 
     const saved = await addMovie({
       title,
       description: 'Recovered from existing movie file during startup diagnostics.',
       movie: filename,
       subtitle: null,
-      thumbnail: null,
-      heroBanner: null,
+      thumbnail: matchingAsset(thumbnailFiles, 'thumbnail'),
+      heroBanner: matchingAsset(heroBannerFiles, 'hero banner'),
       category: 'Recovered',
     }).catch((err) => {
       logger.warn('orphan_movie_recovery_failed', { filename, code: err.code, message: err.message });

@@ -36,7 +36,7 @@ const root = path.join(__dirname, '..', '..');
  * but we choose Linux-safe defaults matching the container filesystem.
  */
 const defaultLinuxBase = '/media';
-const defaultWindowsBase = 'F:\\StreamBox Database';
+const defaultWindowsBase = 'D:\\StreamBox Database';
 
 // Render runs on Linux. For local dev, default to the provided Windows SD-card root.
 // SD_BASE (if provided) still wins, but we normalize known legacy /app/media → /media.

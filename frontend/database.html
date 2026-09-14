@@ -583,7 +583,7 @@ if (hamburger && sidebar && main) {
 // LOAD
 async function loadDatabase() {
   try {
-    const res = await fetch("/movies", { headers: { Accept: 'application/json' } });
+    const res = await fetch("/movies", { cache: 'no-store', headers: { Accept: 'application/json' } });
     const payload = await res.json().catch(() => null);
     if (!res.ok || !Array.isArray(payload)) throw new Error(payload?.error || `HTTP ${res.status}`);
     allMovies = payload;
