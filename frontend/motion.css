@@ -511,7 +511,9 @@ button,
 .file-btn,
 .nav-link,
 .controlButton,
-.skipBtn {
+.skipBtn,
+.btn-login,
+.close-btn {
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -524,12 +526,14 @@ button,
 .nav-link,
 .controlButton,
 .skipBtn,
-.remote button {
+.remote button,
+.btn-login,
+.close-btn {
   position: relative;
   overflow: hidden;
 }
 
-body.motion-enhanced :is(.btn, .icon-btn, .upload-btn, .refresh-btn, .action-icon, .file-btn, .controlButton, .skipBtn, .remote button) {
+body.motion-enhanced :is(.btn, .icon-btn, .upload-btn, .refresh-btn, .action-icon, .file-btn, .controlButton, .skipBtn, .remote button, .btn-login, .close-btn) {
   transition:
     transform var(--sb-motion-fast) var(--sb-ease-hover),
     background var(--sb-motion-med) var(--sb-ease-standard),
@@ -539,17 +543,18 @@ body.motion-enhanced :is(.btn, .icon-btn, .upload-btn, .refresh-btn, .action-ico
     opacity var(--sb-motion-fast) var(--sb-ease-standard) !important;
 }
 
-body.motion-enhanced :is(.btn, .upload-btn, .refresh-btn):hover {
+body.motion-enhanced :is(.btn, .upload-btn, .refresh-btn, .btn-login):hover {
   transform: translate3d(0, -2px, 0) scale(1.018) !important;
 }
 
-body.motion-enhanced :is(.icon-btn, .action-icon, .controlButton, .skipBtn, .remote button):hover {
+body.motion-enhanced :is(.icon-btn, .action-icon, .controlButton, .skipBtn, .remote button, .close-btn):hover {
   transform: translate3d(0, -1px, 0) scale(1.026) !important;
 }
 
 .btn::after,
 .upload-btn::after,
-.refresh-btn::after {
+.refresh-btn::after,
+.btn-login::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -564,7 +569,8 @@ body.motion-enhanced :is(.icon-btn, .action-icon, .controlButton, .skipBtn, .rem
 
 .btn:hover::after,
 .upload-btn:hover::after,
-.refresh-btn:hover::after {
+.refresh-btn:hover::after,
+.btn-login:hover::after {
   opacity: 1;
   transform: translate3d(120%, 0, 0);
 }
@@ -589,12 +595,14 @@ body.motion-enhanced :is(.icon-btn, .action-icon, .controlButton, .skipBtn, .rem
 }
 
 .upload-btn.is-loading,
-.btn.is-loading {
+.btn.is-loading,
+.btn-login.is-loading {
   cursor: progress;
 }
 
 .upload-btn.is-loading::before,
-.btn.is-loading::before {
+.btn.is-loading::before,
+.btn-login.is-loading::before {
   content: "";
   width: 1em;
   height: 1em;

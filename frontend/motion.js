@@ -389,7 +389,9 @@
       '.skipBtn',
       '.remote button',
       '.menu-btn',
-      '.hamburger'
+      '.hamburger',
+      '.btn-login',
+      '.close-btn'
     ].join(',');
 
     doc.addEventListener('pointerdown', (event) => {

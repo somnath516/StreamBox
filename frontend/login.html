@@ -33,16 +33,48 @@ body {
   justify-content: center;
   min-height: 100vh;
   overflow-x: hidden;
+  position: relative;
+}
+
+/* Ambient glow — same cinematic vignette language as the rest of the app,
+   kept quiet so it frames the card instead of competing with it. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(900px 560px at 50% 8%, rgba(229, 9, 20, .10), transparent 62%),
+    radial-gradient(700px 460px at 85% 92%, rgba(229, 9, 20, .06), transparent 60%);
 }
 
 .login-container {
+  position: relative;
+  z-index: 1;
   width: 100%;
   max-width: 420px;
   padding: 40px;
-  background: rgba(20, 20, 20, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  background: var(--sb-panel, rgba(20, 20, 20, 0.95));
+  backdrop-filter: blur(20px) saturate(1.05);
+  -webkit-backdrop-filter: blur(20px) saturate(1.05);
+  border: 1px solid var(--sb-border, rgba(255, 255, 255, .11));
+  border-radius: 14px;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, .5),
+    0 0 60px var(--sb-glow, rgba(229, 9, 20, .18));
   animation: sbPageEnter 0.92s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.login-container.is-shaking {
+  animation: sbLoginShake 420ms cubic-bezier(.36, .07, .19, .97) both;
+}
+
+@keyframes sbLoginShake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
 @keyframes sbPageEnter {
@@ -98,9 +130,31 @@ label {
   letter-spacing: 0.05px;
 }
 
+.input-wrap {
+  position: relative;
+}
+
+.input-wrap svg.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  stroke: rgba(255, 255, 255, 0.4);
+  fill: none;
+  stroke-width: 1.8;
+  pointer-events: none;
+  transition: stroke 0.26s cubic-bezier(.22, .9, .24, 1);
+}
+
+.input-wrap:focus-within svg.input-icon {
+  stroke: var(--red);
+}
+
 input {
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px 44px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 6px;
@@ -120,6 +174,41 @@ input:focus {
 
 input::placeholder {
   color: rgba(255, 255, 255, 0.4);
+}
+
+.toggle-visibility {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  transition: color 0.2s cubic-bezier(.22, .9, .24, 1), background 0.2s cubic-bezier(.22, .9, .24, 1);
+}
+
+.toggle-visibility:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.toggle-visibility svg {
+  width: 17px;
+  height: 17px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.toggle-visibility svg .eye-slash {
+  transition: opacity 0.15s ease;
 }
 
 .btn-login {
@@ -222,7 +311,7 @@ input::placeholder {
 
 <body>
 
-<div class="login-container">
+<div class="login-container" id="loginContainer">
   <div class="login-header">
     <img class="login-logo" src="/logos/logo master.png" alt="Stream Box">
     <div class="login-title"><span style="color:#fff;">Stream</span><span>Box</span></div>
@@ -234,14 +323,24 @@ input::placeholder {
 
     <div class="form-group">
       <label for="adminToken">Admin Token</label>
-      <input
-        type="password"
-        id="adminToken"
-        name="adminToken"
-        placeholder="Enter admin token"
-        autocomplete="current-password"
-        required
-      >
+      <div class="input-wrap">
+        <svg class="input-icon" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+        <input
+          type="password"
+          id="adminToken"
+          name="adminToken"
+          placeholder="Enter admin token"
+          autocomplete="current-password"
+          required
+        >
+        <button type="button" class="toggle-visibility" id="toggleVisibility" aria-label="Show admin token" aria-pressed="false">
+          <svg viewBox="0 0 24 24">
+            <path class="eye-open" d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12Z"></path>
+            <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+            <path class="eye-slash" d="M3 3l18 18" style="opacity:0"></path>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <button type="submit" class="btn-login" id="submitBtn">Sign In</button>
@@ -259,12 +358,23 @@ input::placeholder {
   const tokenInput = document.getElementById('adminToken');
   const submitBtn = document.getElementById('submitBtn');
   const errorMsg = document.getElementById('errorMsg');
+  const container = document.getElementById('loginContainer');
+  const toggleBtn = document.getElementById('toggleVisibility');
 
   // Keep one canonical key, while migrating tokens saved by older admin pages.
   const savedToken = window.StreamBoxAuth.getToken();
   if (savedToken) {
     tokenInput.value = savedToken;
   }
+
+  toggleBtn.addEventListener('click', () => {
+    const showing = tokenInput.type === 'text';
+    tokenInput.type = showing ? 'password' : 'text';
+    toggleBtn.setAttribute('aria-pressed', String(!showing));
+    toggleBtn.setAttribute('aria-label', showing ? 'Show admin token' : 'Hide admin token');
+    toggleBtn.querySelectorAll('.eye-open').forEach((el) => { el.style.opacity = showing ? '1' : '0'; });
+    toggleBtn.querySelector('.eye-slash').style.opacity = showing ? '0' : '1';
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -307,6 +417,11 @@ input::placeholder {
   function showError(msg) {
     errorMsg.textContent = msg;
     errorMsg.classList.add('show');
+    container.classList.remove('is-shaking');
+    // eslint-disable-next-line no-void
+    void container.offsetWidth; // restart animation if triggered twice in a row
+    container.classList.add('is-shaking');
+    tokenInput.focus();
   }
 
   // Auto-focus token input
