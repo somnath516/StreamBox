@@ -52,6 +52,13 @@
 
 *{margin:0;padding:0;box-sizing:border-box}
 
+/* The `hidden` attribute is UA-level CSS (display:none) and gets beaten by
+   any author class that sets its own `display` (e.g. .btn{display:inline-flex}).
+   That was letting the "Retry" button show up next to Play/More Info even
+   when JS had set it hidden. Author-level !important restores the contract:
+   an element with `hidden` is always hidden until the attribute is removed. */
+[hidden]{ display:none !important; }
+
 html{ scroll-behavior:smooth; }
 
 body{
@@ -232,7 +239,14 @@ body.nav-open .menu-btn svg{ transform:rotate(90deg); }
   opacity:0;
   pointer-events:none;
   transition:opacity var(--motion-med) var(--motion-cinema);
-  z-index:950;
+  /* Was 950 — below .navbar's own z-index:1000, so the search/admin
+     icon buttons (siblings of the drawer, inside .navbar) never got
+     dimmed when the mobile menu opened: they'd sit fully bright on
+     top of the scrim while everything else behind them darkened.
+     1050 keeps it under the drawer itself (1100) but above the
+     navbar, so the whole page dims consistently and only the open
+     drawer stays bright. */
+  z-index:1050;
 }
 
 /* RIGHT NAV */
@@ -296,17 +310,15 @@ body.nav-open .menu-btn svg{ transform:rotate(90deg); }
   inset:0;
   z-index:1;
 
-  /* Full-width + full-height coverage with bottom fade that doesn’t leave gaps.
-     Keep it subtle to preserve poster detail. */
+  /* Cinematic left-to-right legibility gradient + gentle top/bottom
+     framing. Uses only percentage-based linear gradients so it scales
+     correctly at any hero width — a fixed-pixel radial here previously
+     held its final (70% black) stop across nearly the entire hero on
+     wide viewports, which is why the banner image was barely visible. */
   background:
-    radial-gradient(900px 520px at 18% 52%, rgba(0,0,0,0.08), rgba(0,0,0,0.70) 70%),
-    linear-gradient(to right, rgba(0,0,0,.78) 0%, rgba(0,0,0,.22) 45%, rgba(0,0,0,.08) 80%),
-    linear-gradient(to top, rgba(20,20,20,.75) 0%, rgba(20,20,20,0) 55%),
-
-    /* Bottom overlay: ensure coverage LEFT→RIGHT and bottom area is always masked. */
-    linear-gradient(to bottom, rgba(0,0,0,.66) 0%, rgba(0,0,0,.18) 55%, rgba(0,0,0,0) 100%),
-
-    rgba(0,0,0,0.10);
+    linear-gradient(to right, rgba(0,0,0,.86) 0%, rgba(0,0,0,.55) 28%, rgba(0,0,0,.12) 56%, transparent 76%),
+    linear-gradient(to top, rgba(8,8,8,.55) 0%, rgba(8,8,8,0) 40%),
+    linear-gradient(to bottom, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 26%);
 
   pointer-events:none;
 }
@@ -676,6 +688,16 @@ body.nav-open .menu-btn svg{ transform:rotate(90deg); }
 #searchBox:focus{
   border-color:var(--red);
   background:#212121;
+}
+/* The sitewide *:focus-visible ring (responsive.css) is tuned for
+   keyboard/remote navigation on buttons and cards. This field is
+   auto-focused the instant the overlay opens, so that ring showed up
+   as a jarring, error-like glow before the person had even looked at
+   it — while adding nothing, since the border/background change above
+   already gives a clear, sufficient focus indicator here. */
+#searchBox:focus-visible{
+  outline:none;
+  box-shadow:none;
 }
 
 #searchResults{
