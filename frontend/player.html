@@ -163,6 +163,67 @@ body.motion-enhanced #video {
   }
 }
 
+/* SEEK TOAST — glass pill with a direction chevron + bouncy pop,
+   replacing the old plain dark box. Pops in on the first tap, then
+   "bumps" (a quick scale kick) on every extra tap while it's already
+   on screen, so mashing the skip button reads as the seconds really
+   stacking up in real time instead of the same toast just re-showing. */
+#seekToast{
+  position:absolute;
+  left:50%;
+  top:50%;
+  z-index:20;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:14px 24px 14px 18px;
+  border-radius:999px;
+  background:rgba(24,24,24,.7);
+  backdrop-filter:blur(18px) saturate(1.4);
+  -webkit-backdrop-filter:blur(18px) saturate(1.4);
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:0 14px 38px rgba(0,0,0,.5);
+  color:#fff;
+  font-weight:700;
+  font-size:clamp(16px, 2.2vw, 21px);
+  letter-spacing:.2px;
+  opacity:0;
+  pointer-events:none;
+  transform:translate(-50%,-50%) scale(.82);
+  transition:opacity .2s ease;
+  will-change:opacity, transform, box-shadow;
+}
+#seekToast .seek-toast-icon{
+  width:22px; height:22px;
+  flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center;
+}
+#seekToast .seek-toast-icon svg{
+  width:100%; height:100%;
+  fill:none; stroke:#e50914; stroke-width:2.3;
+  stroke-linecap:round; stroke-linejoin:round;
+}
+#seekToast.dir-back .seek-toast-icon svg{ transform:scaleX(-1); }
+#seekToast .seek-toast-value{ min-width:1ch; text-shadow:0 2px 8px rgba(0,0,0,.5); }
+
+#seekToast.seek-toast-show{
+  opacity:1;
+  animation:seekToastPop .42s cubic-bezier(.34,1.56,.64,1) both;
+}
+#seekToast.seek-toast-bump{
+  animation:seekToastBump .3s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes seekToastPop{
+  0%   { transform:translate(-50%,-50%) scale(.7); opacity:0; }
+  60%  { transform:translate(-50%,-50%) scale(1.08); opacity:1; }
+  100% { transform:translate(-50%,-50%) scale(1); opacity:1; }
+}
+@keyframes seekToastBump{
+  0%   { transform:translate(-50%,-50%) scale(1); box-shadow:0 14px 38px rgba(0,0,0,.5); }
+  40%  { transform:translate(-50%,-50%) scale(1.16); box-shadow:0 14px 38px rgba(0,0,0,.5), 0 0 0 8px rgba(229,9,20,.24); }
+  100% { transform:translate(-50%,-50%) scale(1); box-shadow:0 14px 38px rgba(0,0,0,.5); }
+}
+
 /* TOP BAR */
 #topBar{
   position:absolute;
@@ -1088,20 +1149,10 @@ body:-webkit-full-screen::-webkit-scrollbar{
     if (!el) {
       el = document.createElement('div');
       el.id = 'seekToast';
-      el.style.position = 'absolute';
-      el.style.left = '50%';
-      el.style.top = '50%';
-      el.style.transform = 'translate(-50%,-50%) scale(0.98)';
-      el.style.zIndex = '999';
-      el.style.pointerEvents = 'none';
-      el.style.padding = '10px 16px';
-      el.style.borderRadius = '12px';
-      el.style.background = 'rgba(0,0,0,0.62)';
-      el.style.color = '#fff';
-      el.style.fontSize = 'clamp(14px, 2.2vw, 20px)';
-      el.style.fontWeight = '700';
-      el.style.opacity = '0';
-      el.style.transition = 'opacity .18s ease, transform .18s ease';
+      el.innerHTML =
+        '<span class="seek-toast-icon"><svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path d="M13 8l4 4-4 4"/><path d="M7 8l4 4-4 4"/></svg></span>' +
+        '<span class="seek-toast-value"></span>';
       document.body.appendChild(el);
     }
     return el;
@@ -1109,21 +1160,30 @@ body:-webkit-full-screen::-webkit-scrollbar{
 
   function showSeekToast() {
     const el = ensureSeekToastEl();
+    const valueEl = el.querySelector('.seek-toast-value');
 
     // Always show sign correctly and animate smoothly on every key press.
     const prefix = seekToastAcc > 0 ? '+' : (seekToastAcc < 0 ? '-' : '+');
     const value = Math.abs(seekToastAcc);
-    el.textContent = prefix + (Number.isInteger(value) ? value : value.toFixed(1)) + 's';
+    valueEl.textContent = prefix + (Number.isInteger(value) ? value : value.toFixed(1)) + 's';
+    el.classList.toggle('dir-back', seekToastAcc < 0);
 
-    // Smooth pop-in / update-in-place (single element)
-    el.style.opacity = '1';
-    el.style.transform = 'translate(-50%,-50%) scale(1.03)';
+    const alreadyShowing = el.classList.contains('seek-toast-show');
+    el.classList.add('seek-toast-show');
+
+    if (alreadyShowing) {
+      // Toast is already up and another tap just landed: replay a quick
+      // "bump" instead of the full pop-in, so repeated taps feel like the
+      // total is really climbing in real time (+10s -> +20s -> +30s ...).
+      el.classList.remove('seek-toast-bump');
+      void el.offsetWidth; // restart the animation
+      el.classList.add('seek-toast-bump');
+    }
 
     if (seekToastTimer) clearTimeout(seekToastTimer);
     seekToastTimer = setTimeout(() => {
       seekToastAcc = 0;
-      el.style.opacity = '0';
-      el.style.transform = 'translate(-50%,-50%) scale(0.98)';
+      el.classList.remove('seek-toast-show', 'seek-toast-bump', 'dir-back');
     }, 650);
   }
 
@@ -1582,8 +1642,18 @@ body:-webkit-full-screen::-webkit-scrollbar{
 
   if (homeBtn) homeBtn.onclick = (e) => { e.stopPropagation(); goHome(); };
   if (fsBtn) fsBtn.onclick = (e) => { e.stopPropagation(); toggleFullscreen(); };
-  if (leftSkip) leftSkip.onclick = (e) => { e.stopPropagation(); seekBy(-10); };
-  if (rightSkip) rightSkip.onclick = (e) => { e.stopPropagation(); seekBy(10); };
+  if (leftSkip) leftSkip.onclick = (e) => {
+    e.stopPropagation();
+    seekToastAcc -= 10;
+    seekBy(-10);
+    showSeekToast();
+  };
+  if (rightSkip) rightSkip.onclick = (e) => {
+    e.stopPropagation();
+    seekToastAcc += 10;
+    seekBy(10);
+    showSeekToast();
+  };
 })();
 </script>
 
