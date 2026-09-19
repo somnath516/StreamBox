@@ -683,6 +683,7 @@ body:-webkit-full-screen::-webkit-scrollbar{
 </video>
 
 <div id="overlay"></div>
+<div class="player-spinner" aria-hidden="true"></div>
 
 <div id="topBar">
   <svg class="icon home-icon" viewBox="0 0 24 24" id="homeBtn" title="Home" role="button" tabindex="0" aria-label="Home">
@@ -1175,13 +1176,35 @@ body:-webkit-full-screen::-webkit-scrollbar{
     const hh = Math.floor(totalSeconds / 3600);
     const mm = Math.floor((totalSeconds % 3600) / 60);
     const ss = totalSeconds % 60;
-    return String(hh).padStart(2, '0') + ':' +
-      String(mm).padStart(2, '0') + ':' +
-      String(ss).padStart(2, '0');
+    // Only show the hours segment once the video actually runs that long,
+    // and don't zero-pad the leading unit — matches the "0:00" placeholder
+    // already in the markup. Previously this always returned "00:00:00",
+    // so the instant playback started the readout jumped from "0:00" to a
+    // fully zero-padded hh:mm:ss and stayed that way for the whole title.
+    if (hh > 0) {
+      return hh + ':' + String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0');
+    }
+    return mm + ':' + String(ss).padStart(2, '0');
   }
 
   videoEl.addEventListener('progress', updateBuffered);
   videoEl.addEventListener('loadedmetadata', updateProgress);
+
+  // Buffering feedback: motion.css already ships a .player-spinner that
+  // reveals on body.video-buffering, but nothing in the player ever added
+  // the element or toggled the class, so a stalled/rebuffering video gave
+  // no visual feedback at all. Wire it to the real media events.
+  function setBuffering(isBuffering) {
+    document.body.classList.toggle('video-buffering', !!isBuffering);
+  }
+  videoEl.addEventListener('waiting', () => setBuffering(true));
+  videoEl.addEventListener('stalled', () => setBuffering(true));
+  videoEl.addEventListener('seeking', () => setBuffering(true));
+  videoEl.addEventListener('playing', () => setBuffering(false));
+  videoEl.addEventListener('seeked', () => setBuffering(false));
+  videoEl.addEventListener('canplay', () => setBuffering(false));
+  videoEl.addEventListener('pause', () => setBuffering(false));
+  videoEl.addEventListener('ended', () => setBuffering(false));
 
   function seekToClientX(clientX, precise = false, startX = clientX, startTime = videoEl.currentTime) {
     if (!bar || !videoEl.duration) return;
